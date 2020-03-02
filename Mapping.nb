@@ -1,0 +1,2251 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.1' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     85613,       2243]
+NotebookOptionsPosition[     77199,       2045]
+NotebookOutlinePosition[     77543,       2060]
+CellTagsIndexPosition[     77500,       2057]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Flight maps", "Title",
+ CellChangeTimes->{{3.7469232658314795`*^9, 
+  3.7469232710311203`*^9}},ExpressionUUID->"76adffa2-4f75-4b32-b252-\
+6069734133f4"],
+
+Cell["\<\
+This notebook reads in a .csv of flights and produces a map of flights.
+Written by A J McCulloch, September 2018.
+Updated May 2019: Cleaner import code, addition of unknown airports and \
+functionalisation of plotting \
+\>", "Text",
+ CellChangeTimes->{{3.746923284567168*^9, 3.746923335014701*^9}, {
+  3.7469262937152495`*^9, 3.7469263239433928`*^9}, {3.7660881203369865`*^9, 
+  3.7660881210241957`*^9}, {3.7660952662769265`*^9, 
+  3.7660953782771997`*^9}},ExpressionUUID->"06dbf4df-fc43-4dc8-958d-\
+d7f9edfb7978"],
+
+Cell[CellGroupData[{
+
+Cell["Preamble", "Chapter",
+ CellChangeTimes->{{3.7469233823120103`*^9, 
+  3.7469233837976923`*^9}},ExpressionUUID->"736cc1b3-16c0-465b-9db7-\
+40ee40a94e78"],
+
+Cell[CellGroupData[{
+
+Cell[TextData[StyleBox["Define default plot options", "Section"]], "Section",
+ CellChangeTimes->{{3.7469234432085457`*^9, 
+  3.7469234538143625`*^9}},ExpressionUUID->"83962998-f0e4-45b4-85be-\
+1848ab5e29f8"],
+
+Cell["\<\
+These options are to make plots which I find pretty. These are used for \
+almost all of my notebooks, so there will likely be many irrelevant options \
+for this particular notebook.\
+\>", "Text",
+ CellChangeTimes->{{3.7469262349192595`*^9, 
+  3.7469262832334337`*^9}},ExpressionUUID->"4e81765f-aa7a-4ab4-8910-\
+4d72781cdd2a"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"SetOptions", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+     "Plot", ",", "PolarPlot", ",", "ParametricPlot", ",", "ListPlot", ",", 
+      "ListStepPlot", ",", "ListLinePlot", ",", "ListLogPlot", ",", 
+      "Histogram"}], "}"}], ",", 
+    RowBox[{"ImageSize", "\[Rule]", "1200"}], ",", 
+    RowBox[{"LabelStyle", "\[Rule]", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"FontFamily", "\[Rule]", "\"\<Myriad Pro\>\""}], " ", ",", 
+       RowBox[{"FontSize", "\[Rule]", "36"}], ",", "Black"}], "}"}]}], ",", 
+    RowBox[{"Frame", "\[Rule]", "True"}], ",", 
+    RowBox[{"Axes", "\[Rule]", "True"}], ",", 
+    RowBox[{"FrameTicks", "\[Rule]", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"Automatic", ",", "None"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"Automatic", ",", "None"}], "}"}]}], "}"}]}], ",", 
+    RowBox[{"PlotTheme", "\[Rule]", "\"\<Detailed\>\""}]}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"SetOptions", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+     "ContourPlot", ",", "ListDensityPlot", ",", "DensityHistogram", ",", 
+      "SmoothDensityHistogram"}], "}"}], ",", 
+    RowBox[{"ImageSize", "\[Rule]", "1200"}], ",", 
+    RowBox[{"FrameStyle", "\[Rule]", 
+     RowBox[{"Directive", "[", 
+      RowBox[{"Black", ",", 
+       RowBox[{"Thickness", "[", "Large", "]"}]}], "]"}]}], ",", 
+    RowBox[{"LabelStyle", "\[Rule]", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"FontFamily", "\[Rule]", "\"\<Myriad Pro\>\""}], " ", ",", 
+       RowBox[{"FontSize", "\[Rule]", "36"}], ",", " ", "Black"}], "}"}]}], 
+    ",", 
+    RowBox[{"ClippingStyle", "\[Rule]", "Automatic"}], ",", 
+    RowBox[{"FrameTicks", "\[Rule]", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{"Automatic", ",", "None"}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"Automatic", ",", "None"}], "}"}]}], "}"}]}]}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"SetOptions", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"ContourPlot", ",", "ListDensityPlot"}], "}"}], ",", 
+    RowBox[{"PlotLegends", "\[Rule]", 
+     RowBox[{"BarLegend", "[", 
+      RowBox[{"Automatic", ",", 
+       RowBox[{"LegendMarkerSize", "\[Rule]", "600"}], ",", 
+       RowBox[{"LegendMargins", "\[Rule]", 
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{"40", ",", "0"}], "}"}], ",", 
+          RowBox[{"{", 
+           RowBox[{"0", ",", "0"}], "}"}]}], "}"}]}], ",", 
+       RowBox[{"LabelStyle", "\[Rule]", 
+        RowBox[{"Directive", "[", 
+         RowBox[{"Black", ",", 
+          RowBox[{"FontFamily", "\[Rule]", "\"\<Myriad Pro\>\""}], " ", ",", 
+          RowBox[{"FontSize", "\[Rule]", "36"}], ",", " ", "Black"}], 
+         "]"}]}]}], "]"}]}]}], "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"path", "=", 
+   RowBox[{"RGBColor", "[", 
+    RowBox[{
+     FractionBox["1", "256"], 
+     RowBox[{"{", 
+      RowBox[{"231", ",", "35", ",", "39"}], "}"}]}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Set", " ", "the", " ", "colour", " ", "of", " ", "the", " ", "flight", 
+    " ", "path"}], " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"land", "=", 
+   RowBox[{"RGBColor", "[", 
+    RowBox[{
+     FractionBox["1", "256"], 
+     RowBox[{"{", 
+      RowBox[{"174", ",", "217", ",", "236"}], "}"}]}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Set", " ", "the", " ", "colour", " ", "of", " ", "the", " ", "land", " ", 
+    "masses"}], " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"water", "=", 
+   RowBox[{"RGBColor", "[", 
+    RowBox[{
+     FractionBox["1", "256"], 
+     RowBox[{"{", 
+      RowBox[{"231", ",", "245", ",", "248"}], "}"}]}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Set", " ", "the", " ", "colour", " ", "of", " ", "the", " ", "water", " ",
+     "masses"}], " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"SetDirectory", "[", 
+    RowBox[{"NotebookDirectory", "[", "]"}], "]"}], " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{
+    "Set", " ", "the", " ", "working", " ", "directory", " ", "to", " ", 
+     "the", " ", "same", " ", "directy", " ", "as", " ", "the", " ", 
+     "notebook"}], " ", "*)"}], ";"}], " "}]}], "Input",
+ CellChangeTimes->{{3.629760340168228*^9, 3.629760415400531*^9}, 
+   3.6297604602020936`*^9, {3.629770763883149*^9, 3.6297707664902983`*^9}, {
+   3.63086913694565*^9, 3.630869139460658*^9}, {3.63088621645067*^9, 
+   3.6308862221656866`*^9}, {3.646513621401737*^9, 3.64651362162475*^9}, {
+   3.648353869869149*^9, 3.6483538701791496`*^9}, {3.64841662634042*^9, 
+   3.6484166283929224`*^9}, {3.648433703920657*^9, 3.648433706523197*^9}, {
+   3.649645920155362*^9, 3.649645950694109*^9}, {3.6496462151452346`*^9, 
+   3.6496462154292507`*^9}, {3.6551720598573155`*^9, 
+   3.6551720627277207`*^9}, {3.713831203590341*^9, 3.7138312074917183`*^9}, {
+   3.7171243627231708`*^9, 3.717124364186674*^9}, {3.7439861841543083`*^9, 
+   3.743986184745208*^9}, {3.746149012723068*^9, 3.7461490129803753`*^9}, {
+   3.746149054179623*^9, 3.7461490751932974`*^9}, {3.7461491177654905`*^9, 
+   3.7461491254910088`*^9}, {3.7461491595147257`*^9, 3.746149206979287*^9}, 
+   3.7461520001132603`*^9, {3.746154474779447*^9, 3.7461545449408674`*^9}, {
+   3.746154657713337*^9, 3.746154676187853*^9}, {3.747021739355111*^9, 
+   3.7470217395720434`*^9}, {3.7470218842258673`*^9, 
+   3.7470219076080613`*^9}, {3.7660859161589594`*^9, 3.766085959007435*^9}, {
+   3.7675903801033564`*^9, 3.7675903829974236`*^9}, {3.7683253750284443`*^9, 
+   3.7683253778980927`*^9}, {3.768330403365024*^9, 3.768330406862506*^9}, {
+   3.768330468737723*^9, 3.7683304689018927`*^9}, {3.7691387967408257`*^9, 
+   3.7691387972076473`*^9}, {3.769139151110237*^9, 3.76913916876397*^9}, {
+   3.7691392049120936`*^9, 
+   3.769139215176812*^9}},ExpressionUUID->"b2ab64e0-8c0e-4986-8a33-\
+4f4002f8f4cf"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Data processing", "Chapter",
+ CellChangeTimes->{{3.7469233943442345`*^9, 
+  3.746923397734523*^9}},ExpressionUUID->"cb269b07-8892-42f5-b0de-\
+a423ef612e6e"],
+
+Cell[CellGroupData[{
+
+Cell["Importing and cleaning", "Section",
+ CellChangeTimes->{{3.7469234173670044`*^9, 
+  3.746923426406522*^9}},ExpressionUUID->"1bfd3839-3bc6-4699-9c52-\
+d4fa9e993e2e"],
+
+Cell["\<\
+Data is expected as a .csv with with the format {Origin, Destination, Year, \
+Outgoing} where the origin and destination of the flights are given as \
+International Air Transport Association (IATA) codes, the year is when the \
+travel occurred and outgoing is a Boolean for with outgoing flights \
+evaluating as true. \
+\>", "Text",
+ CellChangeTimes->{{3.746923487013982*^9, 3.746923553304021*^9}, {
+   3.7469235901997914`*^9, 3.7469236690151653`*^9}, {3.766085830927874*^9, 
+   3.7660858434058175`*^9}, 
+   3.766087810784383*^9},ExpressionUUID->"cafb0995-d437-4d36-91fa-\
+6e962ba57ad0"],
+
+Cell["\<\
+The function imports both the local version and the web version and keeps \
+whichever is longer. \
+\>", "Text",
+ CellChangeTimes->{{3.766087710224095*^9, 3.7660877793115172`*^9}, 
+   3.768163341743143*^9},ExpressionUUID->"f70bc50a-1944-4ac3-97df-\
+82e7ffef8c25"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"importflightlist", "[", 
+   RowBox[{"flightfile_", ",", "webfile_"}], "]"}], ":=", 
+  RowBox[{"Block", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"files", ",", "dat"}], "}"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"files", "=", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Import", "[", 
+         RowBox[{"#", ",", "\"\<Data\>\""}], "]"}], "&"}], "/@", 
+       RowBox[{"{", 
+        RowBox[{"flightfile", ",", "webfile"}], "}"}]}]}], ";", " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{"Import", " ", "both", " ", "files"}], " ", "*)"}], 
+     "\[IndentingNewLine]", 
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Length", "@", 
+         RowBox[{"files", "[", 
+          RowBox[{"[", "1", "]"}], "]"}]}], ">", 
+        RowBox[{"Length", "@", 
+         RowBox[{"files", "[", 
+          RowBox[{"[", "2", "]"}], "]"}]}]}], ",", " ", 
+       RowBox[{"dat", "=", " ", 
+        RowBox[{"files", "[", 
+         RowBox[{"[", "1", "]"}], "]"}]}], ",", " ", 
+       RowBox[{"dat", "=", " ", 
+        RowBox[{"files", "[", 
+         RowBox[{"[", "2", "]"}], "]"}]}]}], "]"}], " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+       RowBox[{"Define", " ", "the", " ", "data", " ", 
+        RowBox[{"array", ":", " ", 
+         RowBox[{
+         "keep", " ", "the", " ", "longer", " ", "of", " ", "the", " ", 
+          "files"}]}]}], ",", " ", 
+       RowBox[{
+       "defaulting", " ", "to", " ", "the", " ", "web", " ", "file"}]}], " ", 
+      "*)"}], ";", "\[IndentingNewLine]", "dat"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7681628815399966`*^9, 3.768162893068722*^9}, {
+  3.7681629303398294`*^9, 3.768162930979947*^9}, {3.7681629748004804`*^9, 
+  3.7681630710289383`*^9}, {3.7681631414734583`*^9, 3.7681631453781652`*^9}, {
+  3.7681632925078497`*^9, 
+  3.768163303187121*^9}},ExpressionUUID->"7a2a3867-e374-42bc-a0a3-\
+93b58751e8b9"],
+
+Cell["\<\
+If a local file exists, check if it is up to date and import. The headers are \
+extracted and the data returned in the format {Origin, Destination, Year, \
+Outgoing} as described above, and a local copy is made for future use.\
+\>", "Text",
+ CellChangeTimes->{{3.768163348876193*^9, 3.7681633970755944`*^9}, {
+  3.768163433763195*^9, 
+  3.768163467072135*^9}},ExpressionUUID->"a4309646-39ba-423b-bf26-\
+265a3a31e5e0"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"filesindir", "=", 
+    RowBox[{"FileNames", "[", "\"\<*.csv\>\"", "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Get", " ", 
+    RowBox[{"the", " ", ".", "csv"}], " ", "data", " ", "files", " ", "in", 
+    " ", "the", " ", "current", " ", "directory"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"localfile", "=", "\"\<mapping_flightlist.csv\>\""}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "local", " ", "version", " ", "of", " ", "the", " ", "file"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+  "webfile", "=", 
+   "\"\<https://docs.google.com/spreadsheets/d/e/2PACX-1vT3EvtZA-W9_\
+1Se11VRbRzl7pZi3-AQi7YNrdXXNnjn-zJxNwHyccTSWUIiFmXJmp8q0Cb5dYx8wWJ4/pub?gid=\
+1913902657&single=true&output=csv\>\""}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "web", " ", "version", " ", "of", " ", "the", " ", "file"}], 
+   " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"If", "[", 
+    RowBox[{
+     RowBox[{"MemberQ", "[", 
+      RowBox[{"filesindir", ",", "localfile"}], "]"}], ",", 
+     RowBox[{"data", "=", 
+      RowBox[{"importflightlist", "[", 
+       RowBox[{"localfile", ",", "webfile"}], "]"}]}], ",", 
+     RowBox[{"data", "=", 
+      RowBox[{"Import", "[", 
+       RowBox[{"webfile", ",", "\"\<Data\>\""}], "]"}]}]}], "]"}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{"If", " ", "a", " ", "local", " ", "file", " ", "exists"}], ",", 
+    " ", 
+    RowBox[{"import", " ", "it"}], ",", " ", 
+    RowBox[{"otherwise", " ", "get", " ", "the", " ", "web", " ", "file"}]}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"Export", "[", 
+    RowBox[{"\"\<mapping_flightlist.csv\>\"", ",", "data"}], "]"}], " ", 
+   ";"}], 
+  RowBox[{"(*", " ", 
+   RowBox[{"Update", " ", "the", " ", "local", " ", "copy"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"headers", " ", "=", " ", 
+   RowBox[{"First", "[", "data", "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Collect", " ", "the", " ", "headers"}], " ", "*)"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"cleaned", " ", "=", " ", 
+   RowBox[{"Rest", "[", "data", "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Clean", " ", "the", " ", "data", " ", "by", " ", "dropping", " ", "the", 
+    " ", "headers", " ", "and", " ", "removing", " ", "row", " ", "labels"}], 
+   " ", "*)"}], ";"}]}], "Input",
+ CellChangeTimes->{{3.7660869743408422`*^9, 3.766087162949904*^9}, {
+   3.766087216143886*^9, 3.7660872837773857`*^9}, {3.7660873650067205`*^9, 
+   3.766087423088708*^9}, {3.766087688544364*^9, 3.7660876949448175`*^9}, {
+   3.766087784529458*^9, 3.766087956616868*^9}, {3.7681504422032766`*^9, 
+   3.7681504702963266`*^9}, {3.768161257523469*^9, 3.7681613347746024`*^9}, 
+   3.768161391710451*^9, {3.768161467945921*^9, 3.7681615104320817`*^9}, {
+   3.7681615503731303`*^9, 3.7681615665732183`*^9}, {3.768163084048958*^9, 
+   3.7681632236579094`*^9}},ExpressionUUID->"9a77890f-a019-45d3-a957-\
+d8e492f810d6"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Airport extraction and location", "Section",
+ CellChangeTimes->{{3.7469260381148815`*^9, 
+  3.7469260527885156`*^9}},ExpressionUUID->"65aab529-bc8d-44ef-b643-\
+2cdd91225a54"],
+
+Cell["\<\
+A list of unique airports is created and the coordinates of these airports is \
+retrieved.\
+\>", "Text",
+ CellChangeTimes->{{3.76609169190648*^9, 
+  3.766091695537901*^9}},ExpressionUUID->"75b00bb8-36ca-4319-9625-\
+9da72be67056"],
+
+Cell["\<\
+This function returns an association thread of airports if a file containing \
+them is stored locally\
+\>", "Text",
+ CellChangeTimes->{{3.768163481641272*^9, 
+  3.7681635103708735`*^9}},ExpressionUUID->"94a0e022-22ae-45cd-a697-\
+fdf99f6956af"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"importairports", "[", "airportfile_", "]"}], ":=", 
+  RowBox[{"Block", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"ds", ",", "localairports"}], "}"}], ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"localairports", "=", 
+      RowBox[{"Import", "[", 
+       RowBox[{"airportfile", ",", "\"\<Data\>\""}], "]"}]}], ";", " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "Import", " ", "local", " ", "file", " ", "containing", " ", "airport", 
+       " ", "data"}], " ", "*)"}], "\[IndentingNewLine]", 
+     RowBox[{"ds", "=", 
+      RowBox[{"Transpose", "[", "localairports", "]"}]}], ";", "  ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+       RowBox[{"Transpose", " ", "the", " ", "imported", " ", "file"}], ",", 
+       " ", 
+       RowBox[{"for", " ", "processing"}]}], " ", "*)"}], 
+     "\[IndentingNewLine]", 
+     RowBox[{"localairports", "=", 
+      RowBox[{"AssociationThread", "[", 
+       RowBox[{
+        RowBox[{"ds", "[", 
+         RowBox[{"[", "1", "]"}], "]"}], ",", 
+        RowBox[{"ds", "[", 
+         RowBox[{"[", "2", "]"}], "]"}]}], "]"}]}], ";", " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "Make", " ", "an", " ", "association", " ", "thread", " ", "of", " ", 
+       "the", " ", "imported", " ", "data"}], " ", "*)"}], 
+     "\[IndentingNewLine]", "localairports"}]}], " ", "]"}]}]], "Input",
+ CellChangeTimes->{{3.7681624368796673`*^9, 3.7681625893868947`*^9}, {
+  3.768168472821141*^9, 
+  3.7681684831004195`*^9}},ExpressionUUID->"2a87f3ca-cbd2-42a9-a34e-\
+a67cffd91435"],
+
+Cell["\<\
+This function returns an association thread of airports using the function \
+AirportData\
+\>", "Text",
+ CellChangeTimes->{{3.7681684867892866`*^9, 
+  3.7681685272193565`*^9}},ExpressionUUID->"997b91d1-1e4e-4f37-aca7-\
+949cb920d90e"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"makeairports", "[", 
+   RowBox[{"ports_", ",", "unknown_", ",", "incorrect_"}], "]"}], ":=", 
+  RowBox[{"Block", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"airportloc", ",", "failures", ",", "portdict"}], "}"}], ",", 
+    "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"airportloc", "=", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"AirportData", "[", 
+         RowBox[{"#", ",", "\"\<Coordinates\>\""}], "]"}], "&"}], "/@", 
+       "ports"}]}], " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "Map", " ", "airport", " ", "data", " ", "to", " ", "each", " ", 
+       "element", " ", "of", " ", "airports"}], " ", "*)"}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"airportloc", "=", 
+      RowBox[{"Replace", "[", 
+       RowBox[{"airportloc", ",", 
+        RowBox[{"x_Missing", "\[RuleDelayed]", 
+         RowBox[{"unknown", "[", 
+          RowBox[{"x", "[", 
+           RowBox[{"[", 
+            RowBox[{"2", ",", "2"}], "]"}], "]"}], " ", "]"}]}], ",", 
+        RowBox[{"{", "1", "}"}]}], "]"}]}], " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "Replace", " ", "the", " ", "missing", " ", "data", " ", "from", " ", 
+       "the", " ", "manual", " ", "assignments"}], " ", "*)"}], ";", " ", 
+     "\[IndentingNewLine]", 
+     RowBox[{"portdict", "=", 
+      RowBox[{"AssociationThread", "[", 
+       RowBox[{"ports", ",", "airportloc"}], "]"}]}], " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "Create", " ", "the", " ", "association", " ", "of", " ", "airports", 
+       " ", "and", " ", "coordinates"}], " ", "*)"}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"failures", "=", 
+      RowBox[{
+       RowBox[{"Cases", "[", 
+        RowBox[{"airportloc", ",", "_Missing"}], "]"}], "[", 
+       RowBox[{"[", 
+        RowBox[{"All", ",", "2", ",", "2"}], "]"}], "]"}]}], " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "Find", " ", "the", " ", "airports", " ", "which", " ", "failed", " ", 
+       "to", " ", "be", " ", "recognised"}], " ", "*)"}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Length", "@", "failures"}], "!=", "0"}], ",", 
+       RowBox[{
+       "portdict", "=", 
+        "\"\<Unknown airport: manually assign the coordinates in the \
+unknownairports association\>\""}]}], "]"}], ";", " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "Warn", " ", "of", " ", "any", " ", "unassigned", " ", "airport", " ", 
+       "codes"}], " ", "*)"}], "\[IndentingNewLine]", 
+     RowBox[{"portdict", " ", "=", " ", 
+      RowBox[{"Join", "[", 
+       RowBox[{"portdict", ",", "incorrect"}], "]"}]}], ";", 
+     "\[IndentingNewLine]", "portdict"}]}], "\[IndentingNewLine]", 
+   "]"}]}]], "Input",
+ CellChangeTimes->{{3.7885556264251366`*^9, 3.7885556319555616`*^9}, {
+  3.788555995891556*^9, 3.788556027510453*^9}, {3.788556467401552*^9, 
+  3.7885564771473284`*^9}},ExpressionUUID->"a44ae8ef-8d59-48aa-a954-\
+623a667e3eb7"],
+
+Cell["\<\
+Airport retrieval relies on the Wolfram database, which does not contain \
+every airport and manual entry is required. Moreover, Wolfram preferences \
+airports in the USA, so IATA codes may not be sufficient, in which case enter \
+the ICAO code. \
+\>", "Text",
+ CellChangeTimes->{{3.76609169955373*^9, 3.7660917633287015`*^9}, {
+  3.788557758994282*^9, 
+  3.788557823067891*^9}},ExpressionUUID->"3d8a80b5-8f2f-42a0-84bf-\
+30d1c2d9a6b5"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"unknownairports", "=", 
+   RowBox[{"<|", 
+    RowBox[{
+     RowBox[{"\"\<VAM\>\"", "\[Rule]", " ", 
+      RowBox[{"{", 
+       RowBox[{"3.470865", ",", "72.835774"}], "}"}]}], ",", 
+     RowBox[{"\"\<YBHB\>\"", "\[Rule]", " ", 
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"-", "43.421389"}], ",", "146.161944"}], "}"}]}]}], "|>"}]}], 
+  " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Association", " ", "of", " ", "airports", " ", "known", " ", "not", " ", 
+    "to", " ", "be", " ", "registed"}], " ", "*)"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"incorrectairports", "=", 
+   RowBox[{"<|", " ", 
+    RowBox[{
+     RowBox[{"\"\<AUH\>\"", "\[Rule]", " ", 
+      RowBox[{"AirportData", "[", 
+       RowBox[{"\"\<OMAA\>\"", ",", "\"\<Coordinates\>\""}], "]"}]}], ",", 
+     RowBox[{"\"\<MLE\>\"", "\[Rule]", " ", 
+      RowBox[{"AirportData", "[", 
+       RowBox[{"\"\<VRMM\>\"", ",", "\"\<Coordinates\>\""}], "]"}]}], ",", 
+     RowBox[{"\"\<PRG\>\"", "\[Rule]", 
+      RowBox[{"AirportData", "[", 
+       RowBox[{"\"\<LKPR\>\"", ",", "\"\<Coordinates\>\""}], "]"}]}]}], 
+    "|>"}]}], 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Association", " ", "of", " ", "airports", " ", "known", " ", "to", " ", 
+    "be", " ", "incorrectly", " ", "identified"}], " ", "*)"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"airportfile", "=", "\"\<mapping_airports.csv\>\""}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "File", " ", "containing", " ", "previous", " ", "airport", " ", "data"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"If", "[", 
+    RowBox[{
+     RowBox[{"MemberQ", "[", 
+      RowBox[{"filesindir", ",", "airportfile"}], "]"}], ",", 
+     RowBox[{"airportslocal", "=", 
+      RowBox[{"importairports", "[", "airportfile", "]"}]}]}], "]"}], ";"}], 
+  " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{
+    "If", " ", "there", " ", "is", " ", "a", " ", "local", " ", "airport", 
+     " ", "file"}], ",", " ", 
+    RowBox[{"import", " ", "it"}]}], " ", "*)"}]}]}], "Input",
+ CellChangeTimes->CompressedData["
+1:eJxTTMoPSmViYGAQBmIQbTZH4TOL8BtHv9PtX0B0wYz6KbpA+lTDzKkg+kvH
+451GQHraF89dIHrBtnUHQbTNk02HQHTFI+ETIHqdqC6YvhQtdgdEc/2dcB9E
+TzEsegmiTVev/QKivb98YjUG0latHjwgOkNASh9EN7aKG4Bo3+sdpiDaRNve
+AkSXfjdvNwXSEwISwPQ5OYnJIHr2WWUwfWXh7kfiVm8cO/Tqn4DoOebT34Bo
+BtkbYLpOcd9NCSC9y/womPaxSbCVBNLf5s5yAtEJNxIqQbSafAmY7g9h6gfR
+x7inTwLRu7gTF4Lo6TYTwTQA3yKGLA==
+  "],ExpressionUUID->"f305f20e-7ccf-4728-a4ef-e72c312c124c"],
+
+Cell["\<\
+An association between the airport and its coordinates is created. This \
+requires an internet connection to collect the airport data and takes a while \
+to run (approximately 20 seconds).\
+\>", "Text",
+ CellChangeTimes->{{3.746923796853917*^9, 3.7469238139889483`*^9}, {
+  3.7469255002764034`*^9, 3.7469255261621943`*^9}, {3.7469255865146112`*^9, 
+  3.746925590386178*^9}, {3.746925956065793*^9, 3.7469259916173716`*^9}, {
+  3.766088166767878*^9, 3.7660882356325817`*^9}, {3.7660917801309767`*^9, 
+  3.766091781281896*^9}},ExpressionUUID->"316e4c1c-389f-4e37-9fa1-\
+624b3c419cf8"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"airports", "=", 
+   RowBox[{"DeleteDuplicates", "[", 
+    RowBox[{"Flatten", "[", 
+     RowBox[{"cleaned", "[", 
+      RowBox[{"[", 
+       RowBox[{"All", ",", 
+        RowBox[{"1", ";;", "2"}]}], "]"}], "]"}], "]"}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Make", " ", "a", " ", "list", " ", "of", " ", "unique", " ", "airports"}],
+    " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"If", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Complement", "[", 
+      RowBox[{"airports", ",", 
+       RowBox[{"Keys", "[", "airportslocal", "]"}]}], "]"}], "\[NotEqual]", 
+     RowBox[{"{", "}"}]}], ",", 
+    RowBox[{"airportdict", "=", 
+     RowBox[{"makeairports", "[", 
+      RowBox[{"airports", ",", "unknownairports", ",", "incorrectairports"}], 
+      "]"}]}], ",", 
+    RowBox[{"airportdict", "=", "airportslocal"}]}], "]"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{
+    "If", " ", "there", " ", "are", " ", "any", " ", "unknown", " ", 
+     "airports", " ", 
+     RowBox[{"(", 
+      RowBox[{"not", " ", "in", " ", "the", " ", "local", " ", "file"}], 
+      ")"}]}], ",", " ", 
+    RowBox[{"get", " ", "them", " ", "using", " ", "AirportData"}]}], " ", 
+   "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"Export", "[", 
+    RowBox[{"\"\<airports.csv\>\"", ",", 
+     RowBox[{"List", "@@@", 
+      RowBox[{"Normal", "@", 
+       RowBox[{"Normal", "@", 
+        RowBox[{"Dataset", "[", "airportdict", "]"}]}]}]}]}], "]"}], " ", 
+   ";"}], 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Store", " ", "a", " ", "local", " ", "copy", " ", "of", " ", "the", " ", 
+    "airport", " ", "coordinates"}], " ", "*)"}]}]}], "Input",
+ CellChangeTimes->{{3.7469227202511177`*^9, 3.746922722887231*^9}, {
+   3.746922819018976*^9, 3.7469228523621197`*^9}, 3.7469255941333027`*^9, {
+   3.746925660049731*^9, 3.7469256608995047`*^9}, {3.746925951362367*^9, 
+   3.746925953618504*^9}, {3.746926078753796*^9, 3.7469261472183127`*^9}, {
+   3.7469261997938623`*^9, 3.7469262170746455`*^9}, {3.747018055499468*^9, 
+   3.7470180581626163`*^9}, {3.7660880119563303`*^9, 
+   3.7660880155038323`*^9}, {3.766090485283842*^9, 3.7660905002896004`*^9}, {
+   3.766090566930094*^9, 3.7660905674314585`*^9}, {3.7660914519699183`*^9, 
+   3.766091452245694*^9}, {3.766091633233574*^9, 3.766091655434046*^9}, {
+   3.7660917978943033`*^9, 3.766091820003112*^9}, {3.766093343778615*^9, 
+   3.7660933936215434`*^9}, {3.7660934284389896`*^9, 3.766093445460018*^9}, {
+   3.768151223407259*^9, 3.768151223648201*^9}, {3.7681685558897696`*^9, 
+   3.7681686212389603`*^9}, 3.788554953627548*^9, {3.788556108383747*^9, 
+   3.788556144459587*^9}, {3.788556233181327*^9, 3.7885562338408074`*^9}, 
+   3.788556838693343*^9, 
+   3.7885575903205137`*^9},ExpressionUUID->"0083fdd8-841c-4d47-b0ab-\
+d31f619dd39e"],
+
+Cell["\<\
+The list of flights to be plotted is created and the lines to draw are defined\
+\>", "Text",
+ CellChangeTimes->{{3.7660880542555313`*^9, 
+  3.7660881014074955`*^9}},ExpressionUUID->"82fe29f7-9058-4604-abe1-\
+38693cbb2365"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"flightstoplotdest", "=", 
+   RowBox[{"cleaned", "[", 
+    RowBox[{"[", 
+     RowBox[{"All", ",", 
+      RowBox[{"1", ";;", "2"}]}], "]"}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Create", " ", "a", " ", "list", " ", "of", " ", "flights", " ", "to", " ",
+     "plot"}], " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"flightstoplotcoords", "=", 
+   RowBox[{"Map", "[", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"airportdict", "[", "#", "]"}], "&"}], ",", "flightstoplotdest",
+      ",", 
+     RowBox[{"{", "2", "}"}]}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Use", " ", "the", " ", "dictionary", " ", "with", " ", "coordinates", " ",
+     "to", " ", "construct", " ", "array", " ", "of", " ", "lines", " ", "to",
+     " ", "draw"}], " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"airportsvisited", "=", 
+    RowBox[{"cleaned", "[", 
+     RowBox[{"[", 
+      RowBox[{"All", ",", "2"}], "]"}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Select", " ", "the", " ", "destinations", " ", "of", " ", "all", " ", 
+    "flights", " ", 
+    RowBox[{"(", 
+     RowBox[{"including", " ", "transits"}], ")"}]}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"airportsvisitedcount", "=", 
+    RowBox[{"Counts", "[", "airportsvisited", "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Create", " ", "an", " ", "association", " ", "of", " ", "number", " ", 
+    "of", " ", "times", " ", "an", " ", "airport", " ", "has", " ", "been", 
+    " ", "visited"}], " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"transits", "=", 
+    RowBox[{"Select", "[", 
+     RowBox[{"cleaned", ",", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"#", "[", 
+         RowBox[{"[", "6", "]"}], "]"}], "\[Equal]", "1"}], "&"}]}], "]"}]}], 
+   ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Select", " ", "desinations", " ", "marked", " ", "as", " ", "transits"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"destinations", "=", 
+    RowBox[{"Select", "[", 
+     RowBox[{"cleaned", ",", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"#", "[", 
+         RowBox[{"[", "6", "]"}], "]"}], "\[Equal]", "0"}], "&"}]}], "]"}]}], 
+   ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Select", " ", "destinations"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"airportsdest", "=", 
+    RowBox[{"destinations", "[", 
+     RowBox[{"[", 
+      RowBox[{"All", ",", "2"}], "]"}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Select", " ", "the", " ", "destinations", " ", "of", " ", "all", " ", 
+    "flights", " ", 
+    RowBox[{"(", 
+     RowBox[{"excluding", " ", "transits"}], ")"}]}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"airportdestcount", "=", 
+    RowBox[{"Counts", "[", "airportsdest", "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Create", " ", "an", " ", "association", " ", "of", " ", "number", " ", 
+    "of", " ", "times", " ", "an", " ", "airport", " ", "has", " ", "been", 
+    " ", "the", " ", "final", " ", "destination"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"transits", "=", 
+    RowBox[{"DeleteDuplicates", "[", 
+     RowBox[{"transits", "[", 
+      RowBox[{"[", 
+       RowBox[{"All", ",", "2"}], "]"}], "]"}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Select", " ", "the", " ", "unique", " ", "transits"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"destinations", "=", 
+    RowBox[{"DeleteDuplicates", "[", 
+     RowBox[{"destinations", "[", 
+      RowBox[{"[", 
+       RowBox[{"All", ",", "2"}], "]"}], "]"}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Select", " ", "the", " ", "unique", " ", "desitnations"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"transits", "=", 
+    RowBox[{"Complement", "[", 
+     RowBox[{"transits", ",", "destinations"}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Select", " ", "transits", " ", "which", " ", "have", " ", "never", " ", 
+    "been", " ", "destinations"}], " ", "*)"}]}]}], "Input",
+ CellChangeTimes->{{3.7470181266117773`*^9, 3.7470181893586135`*^9}, 
+   3.7470184337240944`*^9, {3.7470184912740064`*^9, 3.747018508903894*^9}, {
+   3.7470200054125404`*^9, 3.7470200704585752`*^9}, 3.7470261317898145`*^9, {
+   3.769137127250602*^9, 
+   3.7691371274964385`*^9}},ExpressionUUID->"ad22c604-21c4-4f77-9139-\
+01a5bc6ce6bc"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Data visualisation", "Chapter",
+ CellChangeTimes->{{3.766094907158126*^9, 3.766094910434166*^9}, 
+   3.766095257213058*^9},ExpressionUUID->"6d9c8f42-4a16-43ca-a6ab-\
+d72458d1ecee"],
+
+Cell[CellGroupData[{
+
+Cell["Generate a flight map", "Section",
+ CellChangeTimes->{{3.7470232427029743`*^9, 
+  3.7470232486568394`*^9}},ExpressionUUID->"327c0a35-c807-46e8-990c-\
+1fe58420a291"],
+
+Cell[CellGroupData[{
+
+Cell["Define plotting functions", "Subsection",
+ CellChangeTimes->{{3.76609478687558*^9, 
+  3.7660948075070705`*^9}},ExpressionUUID->"55f50055-d7fe-401d-9ca6-\
+e1f55bc63bc8"],
+
+Cell["\<\
+The function makemap returns a world map with visited airports marked with \
+points and flight paths drawn between relevant airports \
+\>", "Text",
+ CellChangeTimes->{{3.766088639999738*^9, 
+  3.7660887193112645`*^9}},ExpressionUUID->"a3bb3446-6c08-4314-8682-\
+f7b06ae64073"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"makemap", "[", 
+   RowBox[{"spotsize_", ",", "linesize_", ",", 
+    RowBox[{"showtransit_:", "True"}]}], "]"}], ":=", 
+  RowBox[{"Block", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+     "geopoints", ",", "trans", ",", "transitpoints", ",", " ", "geopath", 
+      ",", " ", "wmap", ",", "basemap", ",", "transitmap"}], "}"}], ",", 
+    "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"geopoints", "=", 
+      RowBox[{"{", 
+       RowBox[{"path", ",", 
+        RowBox[{"PointSize", "[", "spotsize", "]"}], ",", 
+        RowBox[{"Opacity", "[", "1", "]"}], ",", 
+        RowBox[{"Point", "@", 
+         RowBox[{"GeoPosition", "@", 
+          RowBox[{"Values", "[", "airportdict", "]"}]}]}]}], "}"}]}], ";", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "construct", " ", "an", " ", "object", " ", "containing", " ", "all", 
+       " ", "airports", " ", "and", " ", "point", " ", "style"}], " ", "*)"}],
+      "\[IndentingNewLine]", 
+     RowBox[{"trans", "=", 
+      RowBox[{"airportdict", "/@", "transits"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{"showtransit", "\[Equal]", "True"}], ",", 
+       RowBox[{"transitpoints", "=", 
+        RowBox[{"{", 
+         RowBox[{"White", ",", 
+          RowBox[{"PointSize", "[", 
+           FractionBox["spotsize", "2"], "]"}], ",", 
+          RowBox[{"Opacity", "[", "1", "]"}], ",", 
+          RowBox[{"Point", "@", 
+           RowBox[{"GeoPosition", "@", "trans"}]}]}], "}"}]}]}], "]"}], ";", 
+     " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+       RowBox[{
+       "If", " ", "plotting", " ", "a", " ", "map", " ", "with", " ", 
+        "transits"}], ",", " ", 
+       RowBox[{
+       "make", " ", "an", " ", "object", " ", "containing", " ", "transit", 
+        " ", "stops", " ", "with", " ", "seperate", " ", "plot", " ", 
+        "style"}]}], " ", "*)"}], "\[IndentingNewLine]", 
+     RowBox[{"geopath", "=", 
+      RowBox[{"Style", "[", 
+       RowBox[{
+        RowBox[{"GeoPath", "[", "flightstoplotcoords", "]"}], ",", 
+        RowBox[{"Opacity", "[", ".15", "]"}], ",", 
+        RowBox[{"Thickness", "[", "linesize", "]"}], ",", "path"}], "]"}]}], 
+     " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "construct", " ", "an", " ", "object", " ", "containing", " ", "all", 
+       " ", "flights", " ", "and", " ", "specify", " ", "the", " ", "line", 
+       " ", "style"}], " ", "*)"}], ";", "\[IndentingNewLine]", 
+     RowBox[{"wmap", "=", 
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"GeoRange", "\[Rule]", "\"\<World\>\""}], ",", " ", 
+        RowBox[{"Frame", "\[Rule]", "False"}], ",", 
+        RowBox[{"ImageSize", "\[Rule]", "1920"}], ",", 
+        RowBox[{"GeoBackground", "\[Rule]", 
+         RowBox[{"GeoStyling", "[", 
+          RowBox[{"{", 
+           RowBox[{"\"\<CountryBorders\>\"", ",", 
+            RowBox[{"\"\<Land\>\"", "\[Rule]", "land"}], ",", 
+            RowBox[{"\"\<Ocean\>\"", "\[Rule]", "water"}], ",", 
+            RowBox[{"\"\<Border\>\"", "\[Rule]", 
+             RowBox[{"{", 
+              RowBox[{"Black", ",", 
+               RowBox[{"Opacity", "[", ".2", "]"}]}], "}"}]}]}], "}"}], 
+          "]"}]}], ",", 
+        RowBox[{"GeoCenter", "\[Rule]", 
+         RowBox[{"GeoPosition", "[", 
+          RowBox[{"{", 
+           RowBox[{"0", ",", "150"}], "}"}], "]"}]}], ",", 
+        RowBox[{"GeoProjection", "\[Rule]", "\"\<Robinson\>\""}], ",", 
+        RowBox[{"GeoZoomLevel", "\[Rule]", "5"}]}], "}"}]}], " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "generate", " ", "the", " ", "map", " ", "on", " ", "which", " ", "to", 
+       " ", "show", " ", "the", " ", "flights"}], " ", "*)"}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"basemap", "=", 
+      RowBox[{"GeoGraphics", "[", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"geopoints", ",", "geopath"}], "}"}], ",", "wmap"}], "]"}]}],
+      ";", " ", 
+     RowBox[{"(*", " ", 
+      RowBox[{
+      "generate", " ", "the", " ", "map", " ", "of", " ", "the", " ", "world",
+        " ", "overlayed", " ", "with", " ", "the", " ", "airports", " ", "as",
+        " ", "defined", " ", "by", " ", "\"\<geopoints\>\"", " ", "and", " ", 
+       "flight", " ", "lines", " ", "as", " ", "defined", " ", "by", " ", 
+       "\"\<geopath\>\""}], " ", "*)"}], "\[IndentingNewLine]", 
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{"showtransit", "\[Equal]", "True"}], ",", 
+       RowBox[{"transitmap", "=", 
+        RowBox[{"GeoGraphics", "[", "transitpoints", "]"}]}]}], "]"}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{"showtransit", "\[Equal]", "True"}], ",", 
+       RowBox[{"Show", "[", 
+        RowBox[{"basemap", ",", "transitmap", ",", 
+         RowBox[{"GeoZoomLevel", "\[Rule]", "5"}]}], "]"}], ",", 
+       RowBox[{"Show", "[", 
+        RowBox[{"basemap", ",", 
+         RowBox[{"GeoZoomLevel", "\[Rule]", "5"}]}], "]"}]}], "]"}]}]}], 
+   "\[IndentingNewLine]", "]"}]}]], "Input",
+ CellChangeTimes->{{3.769137225441103*^9, 3.7691372445085635`*^9}, {
+  3.7691374747197456`*^9, 3.769137525464465*^9}, {3.769137591067268*^9, 
+  3.769137591540162*^9}, {3.7691377848568954`*^9, 3.769137785086808*^9}, {
+  3.769137851934083*^9, 3.7691378978899984`*^9}, {3.769138043043001*^9, 
+  3.7691381073796835`*^9}, {3.7691382559158554`*^9, 3.76913827062679*^9}, {
+  3.7691383719921722`*^9, 3.769138399638624*^9}, {3.7691384681294827`*^9, 
+  3.7691384864023104`*^9}, {3.7691386754902253`*^9, 3.7691386783194237`*^9}, {
+  3.7691387456388826`*^9, 
+  3.769138751190022*^9}},ExpressionUUID->"02647260-a51c-454c-8c79-\
+2213ca4155cf"],
+
+Cell[TextData[{
+ "Redraw the map ",
+ StyleBox["map",
+  FontSlant->"Italic"],
+ " centred on ",
+ StyleBox["centre",
+  FontSlant->"Italic"],
+ " with a latitude and longitude range defined by ",
+ StyleBox["lat ",
+  FontSlant->"Italic"],
+ "and ",
+ StyleBox["long",
+  FontSlant->"Italic"]
+}], "Text",
+ CellChangeTimes->{{3.7660944486678386`*^9, 
+  3.7660944972843466`*^9}},ExpressionUUID->"727f84e8-2a7b-4537-be35-\
+0e32370e449b"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"showmap", "[", 
+   RowBox[{"map_", ",", "centre_", ",", "lat_", ",", "long_"}], "]"}], ":=", 
+  RowBox[{"Block", "[", 
+   RowBox[{
+    RowBox[{"{", "}"}], ",", "\[IndentingNewLine]", 
+    RowBox[{"Show", "[", 
+     RowBox[{"map", ",", 
+      RowBox[{"GeoRange", "\[Rule]", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"centre", "[", 
+             RowBox[{"[", "1", "]"}], "]"}], "-", "lat"}], ",", 
+           RowBox[{
+            RowBox[{"centre", "[", 
+             RowBox[{"[", "1", "]"}], "]"}], "+", "lat"}]}], "}"}], ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"centre", "[", 
+             RowBox[{"[", "2", "]"}], "]"}], "-", "long"}], ",", 
+           RowBox[{
+            RowBox[{"centre", "[", 
+             RowBox[{"[", "2", "]"}], "]"}], "+", "long"}]}], "}"}]}], 
+        "}"}]}]}], "]"}]}], " ", "\[IndentingNewLine]", "]"}]}]], "Input",
+ CellChangeTimes->{{3.7660944450554285`*^9, 3.766094446530915*^9}, {
+  3.7660945064697685`*^9, 
+  3.7660945071740727`*^9}},ExpressionUUID->"48d70051-9f1a-4726-aca6-\
+7ff411b07424"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["World map", "Subsection",
+ CellChangeTimes->{{3.7660948494749346`*^9, 
+  3.7660948514105654`*^9}},ExpressionUUID->"062d1b71-60d8-4dcd-a3b1-\
+947227dd70c7"],
+
+Cell["Make a world map showing all flights", "Text",
+ CellChangeTimes->{{3.766094740787836*^9, 3.766094747331151*^9}, 
+   3.7660948552341003`*^9},ExpressionUUID->"fd6d7318-5482-4ad2-a403-\
+87ec1ce7bb0c"],
+
+Cell[BoxData[
+ RowBox[{"worldmap", "=", 
+  RowBox[{"makemap", "[", 
+   RowBox[{"0.00375", ",", "0.00125"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7660937646979465`*^9, 3.7660937733810015`*^9}, {
+  3.7660939889354353`*^9, 3.766093995683181*^9}, {3.7660940459876084`*^9, 
+  3.766094069811864*^9}, {3.7660952224762244`*^9, 3.766095240171173*^9}, {
+  3.7675801584957047`*^9, 3.767580188841962*^9}, {3.7683262636822433`*^9, 
+  3.76832627363688*^9}, {3.76832650728179*^9, 3.76832650838935*^9}, {
+  3.7683267611024537`*^9, 3.768326761872237*^9}, {3.768330500968115*^9, 
+  3.7683305065671434`*^9}, {3.769137999810892*^9, 3.7691380110763187`*^9}, {
+  3.7691382827992997`*^9, 3.769138290793704*^9}, {3.769138391963009*^9, 
+  3.7691384222694435`*^9}},ExpressionUUID->"37fd6f80-48d7-4270-ab2c-\
+893f109cbf3b"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Regional maps", "Subsection",
+ CellChangeTimes->{{3.766094678706972*^9, 
+  3.766094680370782*^9}},ExpressionUUID->"de3d1e2b-717e-4f60-92f9-\
+a2b7ba0d8092"],
+
+Cell["Make a map with parameters appropriate for zoomed images", "Text",
+ CellChangeTimes->{{3.7660946885473986`*^9, 3.7660946956504993`*^9}, {
+  3.7660948694933844`*^9, 
+  3.7660948720667915`*^9}},ExpressionUUID->"09186c9a-4082-4aa9-8352-\
+555d5915fd4f"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"mapforzoom", "=", 
+   RowBox[{"makemap", "[", 
+    RowBox[{"0.0085", ",", "0.0025"}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Map", " ", "with", " ", "larger", " ", "spot", " ", "sizes", " ", "for", 
+    " ", "airports"}], " ", "*)"}], ";"}]], "Input",
+ CellChangeTimes->{{3.7660950313656015`*^9, 3.7660950425633864`*^9}, {
+   3.7675785432172527`*^9, 3.7675785438090506`*^9}, 3.7675795032716856`*^9, {
+   3.7691379739018197`*^9, 
+   3.7691379741407733`*^9}},ExpressionUUID->"1465c76d-e03f-481e-b662-\
+d241c24f5a67"],
+
+Cell[TextData[StyleBox["Australian map", "Subsubsection"]], "Text",
+ CellChangeTimes->{{3.766093780851424*^9, 
+  3.7660937841303434`*^9}},ExpressionUUID->"6b129c56-ee75-4dab-a612-\
+8a9138191a4e"],
+
+Cell["Create a map for mainland Australia", "Text",
+ CellChangeTimes->{{3.7660949574411287`*^9, 
+  3.7660949731876516`*^9}},ExpressionUUID->"d22867db-f4e0-4e92-b387-\
+52fbb73fe3db"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"Australia", "=", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"-", "23.6980"}], ",", "133.8807"}], "}"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Coordinates", " ", "of", " ", "the", " ", "centre", " ", "of", " ", 
+    "Australia"}], " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"auslatlong", "=", 
+    RowBox[{"{", 
+     RowBox[{"22.5", ",", "25"}], "}"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Extent", " ", "of", " ", "latitude", " ", "and", " ", "longitude", " ", 
+    "over", " ", "which", " ", "to", " ", "make", " ", "the", " ", "map"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{"showmap", "[", 
+  RowBox[{"mapforzoom", ",", "Australia", ",", 
+   RowBox[{"auslatlong", "[", 
+    RowBox[{"[", "1", "]"}], "]"}], ",", 
+   RowBox[{"auslatlong", "[", 
+    RowBox[{"[", "2", "]"}], "]"}]}], "]"}]}], "Input",
+ CellChangeTimes->{{3.7660950227395296`*^9, 3.766095022901143*^9}, {
+  3.7675778076101713`*^9, 3.7675778113779817`*^9}, {3.767578311234701*^9, 
+  3.7675783594734435`*^9}, {3.76757840748168*^9, 3.7675784415829077`*^9}, {
+  3.7675787655088744`*^9, 3.767578809961599*^9}, {3.7675788421525517`*^9, 
+  3.7675788973285604`*^9}, {3.767578945922844*^9, 
+  3.767578950632938*^9}},ExpressionUUID->"df728b04-5c3b-4c5c-8e3d-\
+f42b240aa04c"],
+
+Cell[TextData[StyleBox["European map", "Subsubsection"]], "Text",
+ CellChangeTimes->{{3.7660938783078337`*^9, 
+  3.766093880580079*^9}},ExpressionUUID->"f5121060-e1e4-45eb-bbe8-\
+ea9d279050bd"],
+
+Cell["Create a map for (Western) Europe, centred on Paris", "Text",
+ CellChangeTimes->{{3.7660951064991655`*^9, 
+  3.7660951184835687`*^9}},ExpressionUUID->"4278ea77-854b-4063-8685-\
+3d5c2f4cc892"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"Paris", "=", 
+    RowBox[{"{", 
+     RowBox[{"48.8566", ",", "2.3522"}], "}"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+    RowBox[{"Coordinates", " ", "of", " ", "Paris"}], ",", " ", "France"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"eulatlong", "=", 
+    RowBox[{"{", 
+     RowBox[{"25", ",", "27.5"}], "}"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Extent", " ", "of", " ", "latitude", " ", "and", " ", "longitude", " ", 
+    "over", " ", "which", " ", "to", " ", "make", " ", "the", " ", "map"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{"showmap", "[", 
+  RowBox[{"mapforzoom", ",", "Paris", ",", 
+   RowBox[{"eulatlong", "[", 
+    RowBox[{"[", "1", "]"}], "]"}], ",", 
+   RowBox[{"eulatlong", "[", 
+    RowBox[{"[", "2", "]"}], "]"}]}], "]"}]}], "Input",
+ CellChangeTimes->{{3.766095132706752*^9, 3.7660951443945513`*^9}, {
+   3.7675777865319414`*^9, 3.7675777994737854`*^9}, {3.7675785973943987`*^9, 
+   3.767578650264342*^9}, {3.767578696025237*^9, 3.767578696192182*^9}, {
+   3.7675787308170133`*^9, 3.767578756130884*^9}, 3.767578796601905*^9, {
+   3.767579065417238*^9, 3.767579073232744*^9}, 
+   3.769137920827551*^9},ExpressionUUID->"c07c93a2-236a-4f1f-b396-\
+833f44bc2af7"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"NotebookDirectory", "[", "]"}]], "Input",
+ CellChangeTimes->{{3.7691917426792345`*^9, 
+  3.7691917501398544`*^9}},ExpressionUUID->"2dfb583f-d4e4-4480-ba03-\
+aaaa7075c39b"],
+
+Cell[BoxData["\<\"C:\\\\Users\\\\Andy\\\\Dropbox\\\\AndyDOCS-personal\\\\\
+Mapping\\\\Flight mapping\\\\\"\>"], "Output",
+ CellChangeTimes->{3.769191750546708*^9, 
+  3.7885579130860195`*^9},ExpressionUUID->"4dd3c783-bac6-4a79-bd4d-\
+6358584dc9bb"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Make export image", "Subsection",
+ CellChangeTimes->{{3.767577844697913*^9, 
+  3.7675778494174013`*^9}},ExpressionUUID->"6989a8af-e2e8-4792-bd2a-\
+bdea6d07f7c6"],
+
+Cell["Produce the maps to export as images", "Text",
+ CellChangeTimes->{{3.767577855921321*^9, 3.7675778841379757`*^9}, {
+  3.7675799883033323`*^9, 
+  3.767580002223484*^9}},ExpressionUUID->"5e9f8ef2-cd0d-49e7-9ff4-\
+9cf63eddf36b"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"Ausoffset", " ", "=", " ", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"-", "2.5"}], ",", " ", "0"}], "}"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Offset", " ", "coordinates", " ", "for", " ", "best", " ", "Australia", 
+    " ", "export", " ", "map"}], " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{"aumap", ":=", 
+  RowBox[{"showmap", "[", 
+   RowBox[{"mapforzoom", ",", 
+    RowBox[{"Australia", "+", "Ausoffset"}], ",", 
+    RowBox[{"auslatlong", "[", 
+     RowBox[{"[", "1", "]"}], "]"}], ",", 
+    RowBox[{"auslatlong", "[", 
+     RowBox[{"[", "2", "]"}], "]"}]}], "]"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"EUoffset", "=", 
+    RowBox[{"{", 
+     RowBox[{"4", ",", " ", 
+      RowBox[{"-", "1"}]}], "}"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Offset", " ", "coordinates", " ", "for", " ", "best", " ", "Europe", " ", 
+    "export", " ", "map"}], " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{"eumap", ":=", 
+  RowBox[{"showmap", "[", 
+   RowBox[{"mapforzoom", ",", 
+    RowBox[{"Paris", "+", "EUoffset"}], ",", 
+    RowBox[{"eulatlong", "[", 
+     RowBox[{"[", "1", "]"}], "]"}], ",", 
+    RowBox[{"eulatlong", "[", 
+     RowBox[{"[", "2", "]"}], "]"}]}], "]"}]}]}], "Input",
+ CellChangeTimes->{{3.767579041080048*^9, 3.7675791325052037`*^9}, {
+   3.767579322280245*^9, 3.7675794399236183`*^9}, {3.7675796198274045`*^9, 
+   3.7675796996349473`*^9}, 3.7675798066648507`*^9, {3.767579888946973*^9, 
+   3.767579897281297*^9}, {3.7675799398108983`*^9, 3.767579943049841*^9}, {
+   3.7675799764590993`*^9, 
+   3.7675799780556774`*^9}},ExpressionUUID->"8331244e-1e65-445c-90bd-\
+6c61bd27dded"],
+
+Cell[TextData[{
+ "Function to export a trimmed, square image (use ",
+ StyleBox["dim",
+  FontSlant->"Italic"],
+ ") and resized to ",
+ StyleBox["size",
+  FontSlant->"Italic"]
+}], "Text",
+ CellChangeTimes->{{3.7675860253770447`*^9, 
+  3.7675860851768417`*^9}},ExpressionUUID->"1c4c7eca-18a9-476f-8200-\
+b0187993ceab"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"exportsquareimage", "[", 
+   RowBox[{"image_", ",", "dim_", ",", "size_", ",", "filename_"}], "]"}], ":=", 
+  RowBox[{"Block", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"imdims", ",", " ", "trimmed", ",", " ", "map"}], "}"}], ",", 
+    "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"imdims", "=", 
+      RowBox[{"ImageDimensions", "[", "image", "]"}]}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"trimmed", "=", 
+      RowBox[{"ImageTrim", "[", 
+       RowBox[{"image", ",", 
+        RowBox[{"{", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{
+            FractionBox[
+             RowBox[{
+              RowBox[{"imdims", "[", 
+               RowBox[{"[", "1", "]"}], "]"}], "-", "dim"}], "2"], ",", 
+            FractionBox[
+             RowBox[{
+              RowBox[{"imdims", "[", 
+               RowBox[{"[", "2", "]"}], "]"}], "-", "dim"}], "2"]}], "}"}], 
+          ",", 
+          RowBox[{"{", 
+           RowBox[{
+            FractionBox[
+             RowBox[{
+              RowBox[{"imdims", "[", 
+               RowBox[{"[", "1", "]"}], "]"}], "+", "dim"}], "2"], ",", 
+            FractionBox[
+             RowBox[{
+              RowBox[{"imdims", "[", 
+               RowBox[{"[", "2", "]"}], "]"}], "+", "dim"}], "2"]}], "}"}]}], 
+         "}"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"map", "=", 
+      RowBox[{"ImageResize", "[", 
+       RowBox[{"trimmed", ",", "size"}], "]"}]}], ";", "\[IndentingNewLine]", 
+     RowBox[{"Export", "[", 
+      RowBox[{
+       RowBox[{
+       "\"\<Exported images\\\\\>\"", "<>", "filename", "<>", 
+        "\"\<.pdf\>\""}], ",", "trimmed"}], "]"}], ";", "\[IndentingNewLine]",
+      "map"}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7675862253400307`*^9, 3.7675862256899014`*^9}, {
+   3.767586804050174*^9, 3.7675868173139153`*^9}, {3.769191764264306*^9, 
+   3.7691918135984616`*^9}, 3.769192826398803*^9, {3.7691928670217733`*^9, 
+   3.76919287259997*^9}},ExpressionUUID->"ccca0367-9b26-4965-997d-\
+7f001863cd42"],
+
+Cell["Export the maps", "Text",
+ CellChangeTimes->{{3.7675860094411774`*^9, 
+  3.7675860126411514`*^9}},ExpressionUUID->"68de32b5-e685-4c6e-9f18-\
+812c56ef42f7"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Export", "[", 
+   RowBox[{"\"\<Exported images\\\\eumap.pdf\>\"", ",", "eumap"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Export", "[", 
+   RowBox[{"\"\<Exported images\\\\aumap.pdf\>\"", ",", "aumap"}], "]"}], 
+  ";"}]}], "Input",
+ CellChangeTimes->{{3.7691930629206753`*^9, 3.769193105357175*^9}, {
+  3.788558027237683*^9, 
+  3.7885580284933314`*^9}},ExpressionUUID->"82bb6ec8-f443-4504-ad5a-\
+0415d907cd93"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"worldexport", "=", "worldmap"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Export", "[", 
+   RowBox[{"\"\<Exported images\\\\worldexport.pdf\>\"", ",", "worldexport"}],
+    "]"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"euexport", "=", 
+   RowBox[{"exportsquareimage", "[", 
+    RowBox[{"eumap", ",", "1400", ",", "900", ",", "\"\<eumap\>\""}], "]"}]}],
+   ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ausexport", "=", 
+   RowBox[{"exportsquareimage", "[", 
+    RowBox[{"aumap", ",", "1700", ",", "900", ",", "\"\<aumap\>\""}], "]"}]}],
+   ";"}]}], "Input",
+ CellChangeTimes->{{3.76757944405929*^9, 3.7675794723602095`*^9}, {
+  3.767580025015997*^9, 3.767580065399569*^9}, {3.7675836639072933`*^9, 
+  3.767583665324842*^9}, {3.767585917273759*^9, 3.767585941649947*^9}, {
+  3.767585997313072*^9, 3.7675860030742235`*^9}, {3.7675861125880384`*^9, 
+  3.767586116257876*^9}, {3.767586835450101*^9, 3.7675868499944224`*^9}, {
+  3.769191959285018*^9, 
+  3.769191975302889*^9}},ExpressionUUID->"643d4707-75b2-4409-8ea6-\
+e996ed23c10a"],
+
+Cell["\<\
+Mask of 1200 pix for Aus, 1000 pix for Eu, scale eu by 120%, scale both by 55%\
+\>", "Text",
+ CellChangeTimes->{{3.7691933206490903`*^9, 3.769193340194828*^9}, {
+  3.7691936112026834`*^9, 
+  3.76919362251406*^9}},ExpressionUUID->"acc281c6-b564-40d6-bc65-\
+1d244743d7f3"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Flight statistics", "Section",
+ CellChangeTimes->{{3.7660976777161274`*^9, 
+  3.76609768516251*^9}},ExpressionUUID->"c01c6a4b-042c-424c-a03a-\
+3eb040187a46"],
+
+Cell["\<\
+Calculate useful quantities that will likely be reused in calculations\
+\>", "Text",
+ CellChangeTimes->{{3.7660998209837136`*^9, 
+  3.766099852148409*^9}},ExpressionUUID->"cee289e3-3c01-4435-a0cd-\
+406c6842d421"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"numflights", "=", 
+   RowBox[{"Length", "@", "flightstoplotdest"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "The", " ", "total", " ", "number", " ", "of", " ", "flights", " ", 
+    "taken"}], " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"yearsfull", "=", 
+   RowBox[{"cleaned", "[", 
+    RowBox[{"[", 
+     RowBox[{"All", ",", "3"}], "]"}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "An", " ", "array", " ", "of", " ", "years", " ", "when", " ", "flights", 
+    " ", "were", " ", "taken"}], " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"yearsunique", "=", 
+   RowBox[{"DeleteDuplicates", "[", "yearsfull", "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"The", " ", "unique", " ", "years", " ", "of", " ", "travel"}], 
+   " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"flightsperyear", "=", 
+   RowBox[{"Counts", "[", "yearsfull", "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "An", " ", "association", " ", "of", " ", "the", " ", "number", " ", "of", 
+    " ", "flights", " ", "in", " ", "a", " ", "given", " ", "year"}], " ", 
+   "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"flightdistances", "=", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"QuantityMagnitude", "[", 
+       RowBox[{"GeoDistance", "[", "#", "]"}], "]"}], "&"}], "/@", 
+     "flightstoplotcoords"}]}], " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{"Array", " ", "of", " ", "flight", " ", 
+     RowBox[{"distances", " ", "[", "km", "]"}]}], " ", "*)"}], ";"}], 
+  " "}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"cumulative", "=", 
+   RowBox[{"Total", "[", "flightdistances", "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Total", " ", "distance", " ", 
+    RowBox[{"travelled", " ", "[", "km", "]"}]}], " ", "*)"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"speed", "=", "850"}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Average", " ", "speed", " ", "of", " ", 
+    RowBox[{"aeroplane", " ", "[", 
+     RowBox[{"km", "/", "h"}], "]"}]}], " ", "*)"}]}]}], "Input",
+ CellChangeTimes->{{3.766098916202237*^9, 3.766098950010686*^9}, {
+  3.766099420277523*^9, 3.7660994689333024`*^9}, {3.766099541540368*^9, 
+  3.7660996000542083`*^9}, {3.7660996336807313`*^9, 3.76609973218255*^9}, {
+  3.7660997853654833`*^9, 3.7660997998991346`*^9}, {3.766099866023969*^9, 
+  3.7660998665492983`*^9}, {3.76758812272742*^9, 3.7675881430075216`*^9}, {
+  3.767589388797729*^9, 
+  3.767589405717826*^9}},ExpressionUUID->"4ae86301-70a7-4dad-948e-\
+f484c951b5c2"],
+
+Cell[CellGroupData[{
+
+Cell["Distance travelled", "Subsection",
+ CellChangeTimes->{{3.7660976914597497`*^9, 
+  3.7660976966598225`*^9}},ExpressionUUID->"bd24e438-f377-4efb-b9c1-\
+5bcadf30d54f"],
+
+Cell["Calculate the distance travelled per year", "Text",
+ CellChangeTimes->{{3.7660998946315484`*^9, 
+  3.766099904468623*^9}},ExpressionUUID->"8b3198a2-2fcf-4881-9fcd-\
+a12e0fa7b6c3"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"touse", "=", 
+   RowBox[{"GatherBy", "[", 
+    RowBox[{
+     RowBox[{"Transpose", "[", 
+      RowBox[{"{", 
+       RowBox[{"yearsfull", ",", "flightdistances"}], "}"}], "]"}], ",", 
+     "First"}], "]"}]}], 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "An", " ", "array", " ", "of", " ", "flight", " ", "distances", " ", 
+    "with", " ", "the", " ", "year", " ", "the", " ", "flight", " ", "was", 
+    " ", "taken"}], " ", "*)"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"flightwithyear", "=", 
+    RowBox[{"Flatten", "[", 
+     RowBox[{"touse", ",", "1"}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Array", " ", "with", " ", "year", " ", "of", " ", "flight", " ", "and", 
+    " ", "distnace", " ", "of", " ", "flight"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"distanceperyear", " ", "=", " ", 
+   RowBox[{"Table", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"yearsunique", "[", 
+        RowBox[{"[", "i", "]"}], "]"}], ",", 
+       RowBox[{"Total", "[", 
+        RowBox[{
+         RowBox[{"touse", "[", 
+          RowBox[{"[", "i", "]"}], "]"}], "[", 
+         RowBox[{"[", 
+          RowBox[{"All", ",", "2"}], "]"}], "]"}], "]"}]}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"i", ",", "1", ",", 
+       RowBox[{"Length", "@", "yearsunique"}]}], "}"}]}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Calculate", " ", "the", " ", "distance", " ", "travelled", " ", "in", " ",
+     "a", " ", "given", " ", "year"}], " ", "*)"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Clear", "[", "touse", "]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"yearsall", "=", 
+    RowBox[{"Range", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Min", "[", "yearsunique", "]"}], "-", "1"}], ",", 
+      RowBox[{"Max", "[", "yearsunique", "]"}]}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Array", " ", "of", " ", "every", " ", "year", " ", "from", " ", "first", 
+    " ", "travel", " ", "to", " ", "most", " ", "recent", " ", "travel"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"yearsnotravel", "=", 
+    RowBox[{"Complement", "[", 
+     RowBox[{"yearsall", ",", 
+      RowBox[{"Select", "[", 
+       RowBox[{"yearsall", ",", 
+        RowBox[{
+         RowBox[{"MemberQ", "[", 
+          RowBox[{"yearsunique", ",", "#"}], "]"}], "&"}]}], "]"}]}], "]"}]}],
+    ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Array", " ", "of", " ", "years", " ", "with", " ", "no", " ", "travel"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"distanceperyear", "=", 
+    RowBox[{"SortBy", "[", 
+     RowBox[{
+      RowBox[{"Join", "[", 
+       RowBox[{"distanceperyear", ",", 
+        RowBox[{"Transpose", "[", 
+         RowBox[{"{", 
+          RowBox[{"yearsnotravel", ",", 
+           RowBox[{"Array", "[", 
+            RowBox[{
+             RowBox[{"0", "&"}], ",", 
+             RowBox[{"Length", "@", "yearsnotravel"}]}], "]"}]}], "}"}], 
+         "]"}]}], "]"}], ",", "First"}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Update", " ", "distanceperyear", " ", "to", " ", "include", " ", "years", 
+    " ", "with", " ", "no", " ", "travel"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{"distperyearplot", "=", 
+  RowBox[{"ListStepPlot", "[", 
+   RowBox[{"distanceperyear", ",", 
+    RowBox[{"FrameLabel", "\[Rule]", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Year\>\"", ",", " ", "\"\<Distance travelled [km]\>\""}], 
+      "}"}]}], ",", 
+    RowBox[{"Joined", "\[Rule]", "False"}], ",", " ", 
+    RowBox[{"Filling", "\[Rule]", "Axis"}], ",", 
+    RowBox[{"ColorFunction", "\[Rule]", 
+     RowBox[{"ColorData", "[", 
+      RowBox[{"{", 
+       RowBox[{"\"\<GrayTones\>\"", ",", "\"\<Reverse\>\""}], "}"}], "]"}]}], 
+    ",", 
+    RowBox[{"PlotStyle", "\[Rule]", "Thin"}], ",", 
+    RowBox[{"ColorFunctionScaling", "\[Rule]", "True"}], ",", 
+    RowBox[{"AspectRatio", "\[Rule]", 
+     RowBox[{"1", "/", "3"}]}]}], "]"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Make", " ", "a", " ", "plot", " ", "of", " ", "the", " ", "distance", " ",
+     "travelled", " ", "per", " ", "year"}], " ", "*)"}]}]}], "Input",
+ CellChangeTimes->{{3.7660999119244432`*^9, 3.7660999206816025`*^9}, {
+   3.767586988026314*^9, 3.767586989761744*^9}, 3.7675870310607767`*^9, {
+   3.767587259623794*^9, 3.767587275095544*^9}, {3.767587508367705*^9, 
+   3.7675875086475954`*^9}, {3.7675875483444185`*^9, 
+   3.7675875959040055`*^9}, {3.767589415680642*^9, 3.7675894180069113`*^9}, {
+   3.7675899325971947`*^9, 3.7675899683821816`*^9}, {3.7675900451815186`*^9, 
+   3.7675900453094783`*^9}, {3.7887169467832155`*^9, 
+   3.7887169657134523`*^9}},ExpressionUUID->"e6f91e04-6c5f-4d11-bb6e-\
+c902fe93dbae"],
+
+Cell["\<\
+Return a plot of cumulative travel distance with an exponential fit. It is \
+(sadly) a rather good fit.\
+\>", "Text",
+ CellChangeTimes->{{3.788663344810402*^9, 
+  3.788663373873518*^9}},ExpressionUUID->"79fb46d2-fc61-4fe6-8269-\
+e4f3a235d2d7"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"cumulativedistance", " ", "=", " ", 
+    RowBox[{"Table", "[", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"distanceperyear", "[", 
+         RowBox[{"[", 
+          RowBox[{"i", ",", "1"}], "]"}], "]"}], ",", 
+        RowBox[{"Total", "[", 
+         RowBox[{"Take", "[", 
+          RowBox[{
+           RowBox[{"distanceperyear", "[", 
+            RowBox[{"[", 
+             RowBox[{"All", ",", "2"}], "]"}], "]"}], ",", "i"}], "]"}], 
+         "]"}]}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"i", ",", "1", ",", 
+        RowBox[{"Length", "@", 
+         RowBox[{"distanceperyear", "[", 
+          RowBox[{"[", 
+           RowBox[{"All", ",", "2"}], "]"}], "]"}]}]}], "}"}]}], "]"}]}], 
+   ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "List", " ", "with", " ", "year", " ", "and", " ", "cumulative", " ", 
+    "travel", " ", "distance"}], " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"dataplot", "=", 
+    RowBox[{"ListPlot", "[", 
+     RowBox[{"cumulativedistance", ",", 
+      RowBox[{"FrameLabel", "\[Rule]", 
+       RowBox[{"{", 
+        RowBox[{
+        "\"\<Year\>\"", ",", " ", 
+         "\"\<Cumulative distance travelled [km]\>\""}], "}"}]}], ",", 
+      RowBox[{"PlotStyle", "\[Rule]", 
+       RowBox[{"GrayLevel", "[", ".25", "]"}]}]}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Make", " ", "of", " ", "plot", " ", "of", " ", "the", " ", "cumulative", 
+    " ", "distance", " ", "travelled"}], " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"model", "=", 
+    RowBox[{
+     RowBox[{"a", " ", 
+      RowBox[{"Exp", "[", 
+       RowBox[{"b", " ", 
+        RowBox[{"(", 
+         RowBox[{"t", "-", "t0"}], ")"}]}], "]"}]}], "+", "c"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Model", " ", "to", " ", "fit", " ", "distance", " ", "travelled"}], " ", 
+   "*)"}], " "}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"fit", " ", "=", " ", 
+    RowBox[{"FindFit", "[", 
+     RowBox[{"cumulativedistance", ",", " ", "model", ",", " ", 
+      RowBox[{"{", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"a", ",", "5000"}], "}"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"b", ",", "0.25"}], "}"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"t0", ",", " ", "2000"}], "}"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"c", ",", "100000"}], "}"}]}], "}"}], ",", "t"}], "]"}]}], 
+   ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Find", " ", "the", " ", "fit"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"modelf", "=", 
+    RowBox[{"Function", "[", 
+     RowBox[{
+      RowBox[{"{", "t", "}"}], ",", 
+      RowBox[{"Evaluate", "[", 
+       RowBox[{"model", "/.", "fit"}], "]"}]}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Make", " ", "a", " ", "function", " ", "of", " ", "the", " ", "fit"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"modelplot", "=", 
+    RowBox[{"Plot", "[", 
+     RowBox[{
+      RowBox[{"modelf", "[", "t", "]"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"t", ",", 
+        RowBox[{
+         RowBox[{"First", "[", "yearsunique", "]"}], "-", "1.5"}], ",", 
+        RowBox[{
+         RowBox[{"Last", "[", "yearsunique", "]"}], "-", ".5"}]}], "}"}], ",", 
+      RowBox[{"PlotStyle", "\[Rule]", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"GrayLevel", "[", ".85", "]"}], ",", 
+         RowBox[{"Dashing", "[", "0.035", "]"}], ",", 
+         RowBox[{"Thickness", "[", "0.0035", "]"}], ",", 
+         RowBox[{"Opacity", "[", "0.75", "]"}]}], "}"}]}], ",", 
+      RowBox[{"FrameLabel", "\[Rule]", 
+       RowBox[{"{", 
+        RowBox[{
+        "\"\<Year\>\"", ",", " ", 
+         "\"\<Cumulative distance travelled [km]\>\""}], "}"}]}], ",", 
+      RowBox[{"PlotLegends", "\[Rule]", "None"}]}], "]"}]}], ";", " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{"Plot", " ", "the", " ", "model"}], " ", "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"cumulplot", "=", 
+    RowBox[{"Show", "[", 
+     RowBox[{"modelplot", ",", "dataplot", ",", 
+      RowBox[{"AspectRatio", "\[Rule]", 
+       RowBox[{"1", "/", "2"}]}]}], "]"}]}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Show", " ", "the", " ", "data", " ", "and", " ", "the", " ", "model"}], 
+   " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Print", "[", 
+   RowBox[{"\"\<The best fit to the data was \>\"", 
+    RowBox[{"modelf", "[", "t", "]"}]}], "]"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Print", " ", "out", " ", "the", " ", "fit", " ", "function"}], 
+   " ", "*)"}]}]}], "Input",
+ CellChangeTimes->{{3.788649856558839*^9, 3.788650005638383*^9}, {
+  3.7886500536207523`*^9, 3.788650112158351*^9}, {3.7886616604731684`*^9, 
+  3.7886618707620745`*^9}, {3.788661927906703*^9, 3.788661976352285*^9}, {
+  3.7886620160071077`*^9, 3.7886620391011667`*^9}, {3.788662087138795*^9, 
+  3.78866209230539*^9}, {3.7886621572477503`*^9, 3.7886621611475024`*^9}, {
+  3.788662208840579*^9, 3.7886624334413257`*^9}, {3.7886625866557465`*^9, 
+  3.788662618991909*^9}, {3.7886627582162795`*^9, 3.7886627662170515`*^9}, {
+  3.788662888089156*^9, 3.788663029720294*^9}, {3.788663074583063*^9, 
+  3.788663213821129*^9}, {3.7886632886492887`*^9, 3.7886633209468255`*^9}, {
+  3.788716529383633*^9, 3.788716637054785*^9}, {3.788716674830902*^9, 
+  3.78871668231586*^9}, {3.7887167906254854`*^9, 3.7887167954697137`*^9}, {
+  3.7887169827772913`*^9, 
+  3.7887170016577764`*^9}},ExpressionUUID->"2e59f179-71c6-4fc9-9370-\
+75154123847b"],
+
+Cell[BoxData[
+ RowBox[{"\<\"The best fit to the data was \"\>", " ", 
+  RowBox[{"(", 
+   RowBox[{
+    RowBox[{"-", "7825.684007332953`"}], "+", 
+    RowBox[{"8738.015817103842`", " ", 
+     SuperscriptBox["\[ExponentialE]", 
+      RowBox[{"0.16418505654732626`", " ", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"-", "1994.0864092916916`"}], "+", "t"}], ")"}]}]]}]}], 
+   ")"}]}]], "Print",
+ CellChangeTimes->{3.788716753829671*^9, 3.788716795901409*^9, 
+  3.788717002470091*^9},ExpressionUUID->"cacff240-a84d-48e2-8592-\
+672245ed4675"]
+}, Open  ]],
+
+Cell["Export the plots generated above", "Text",
+ CellChangeTimes->{{3.788716906340833*^9, 
+  3.7887169372651167`*^9}},ExpressionUUID->"2c92e8e1-f754-4f40-83d2-\
+8126e268d442"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"Export", "[", 
+   RowBox[{
+   "\"\<Exported Images\\\\distperyearplot.pdf\>\"", ",", "distperyearplot"}],
+    "]"}], ";", " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Export", " ", "plot", " ", "of", " ", "distance", " ", "travelled", " ", 
+    "per", " ", "year"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{"Export", "[", 
+   RowBox[{
+   "\"\<Exported Images\\\\cumulativeplot.pdf\>\"", ",", "cumulplot"}], "]"}],
+   ";", " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Export", " ", "plot", " ", "of", " ", "cumulative", " ", "distance", " ", 
+    "travelled"}], " ", "*)"}]}]], "Input",
+ CellChangeTimes->{{3.788716700070652*^9, 3.788716748021285*^9}, {
+  3.7887168424520516`*^9, 
+  3.788716929031141*^9}},ExpressionUUID->"9b16a406-9c3d-4eed-822d-\
+20c439eb3a09"],
+
+Cell["Calculate some statistics", "Text",
+ CellChangeTimes->{{3.788717014784319*^9, 
+  3.7887170257381897`*^9}},ExpressionUUID->"69806edf-cbbe-47d9-a4af-\
+460523cee017"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"tomoon", " ", "=", 
+   RowBox[{"QuantityMagnitude", "[", 
+    RowBox[{
+     RowBox[{"PlanetaryMoonData", "[", 
+      RowBox[{"\"\<Moon\>\"", ",", "\"\<AverageOrbitDistance\>\""}], "]"}], 
+     ",", "\"\<km\>\""}], "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Distance", " ", "to", " ", "the", " ", 
+    RowBox[{"moon", " ", "[", "km", "]"}]}], " ", "*)"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"aroundtheworld", "=", " ", 
+   RowBox[{"QuantityMagnitude", "[", 
+    RowBox[{"PlanetData", "[", 
+     RowBox[{"\"\<Earth\>\"", ",", "\"\<EquatorialCircumference\>\""}], "]"}],
+     "]"}]}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Circumference", " ", "of", " ", "the", " ", 
+    RowBox[{"Earth", " ", "[", "km", "]"}]}], " ", "*)"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Print", "[", 
+  RowBox[{"\"\<The cumulative travel distance amounts to \>\"", "<>", 
+   RowBox[{"ToString", "[", 
+    RowBox[{"SetPrecision", "[", 
+     RowBox[{
+      FractionBox["cumulative", "aroundtheworld"], ",", "3"}], "]"}], "]"}], 
+   "<>", "\"\< times around the world and \>\"", "<>", 
+   RowBox[{"ToString", "[", 
+    RowBox[{"SetPrecision", "[", 
+     RowBox[{
+      FractionBox["cumulative", "tomoon"], ",", "2"}], "]"}], "]"}], "<>", 
+   "\"\< times to the moon\>\""}], "]"}]}], "Input",
+ CellChangeTimes->{{3.7660890027195683`*^9, 3.766089008160121*^9}, {
+  3.7660974445961237`*^9, 3.76609748512526*^9}, {3.766097540117856*^9, 
+  3.7660975444944534`*^9}, {3.7660976238448753`*^9, 3.766097629667577*^9}, {
+  3.766097702377657*^9, 3.7660977555569196`*^9}, {3.766098159765029*^9, 
+  3.7660982461515055`*^9}, {3.7660998114635267`*^9, 3.76609981320712*^9}, {
+  3.788716483188842*^9, 3.7887164879172893`*^9}, {3.788717041511157*^9, 
+  3.7887171664782333`*^9}, {3.78871722158257*^9, 3.7887172218516784`*^9}, {
+  3.7887173178532157`*^9, 
+  3.7887173385586033`*^9}},ExpressionUUID->"ae98cfe5-5192-4d43-ae9a-\
+5b81a5be880c"],
+
+Cell[BoxData["\<\"The cumulative travel distance amounts to 13.5 times around \
+the world and 1.4 times to the moon\"\>"], "Print",
+ CellChangeTimes->{{3.7887171587747436`*^9, 3.7887171668843913`*^9}, 
+   3.788717222335492*^9, {3.788717329837096*^9, 
+   3.788717338839788*^9}},ExpressionUUID->"e5e85801-a568-4ca2-a841-\
+06f68849c0cd"]
+}, Open  ]],
+
+Cell[TextData[ButtonBox["List of countries by emissions per capita",
+ BaseStyle->"Hyperlink",
+ ButtonData->{
+   URL["https://en.wikipedia.org/wiki/List_of_countries_by_carbon_dioxide_\
+emissions"], None},
+ ButtonNote->
+  "https://en.wikipedia.org/wiki/List_of_countries_by_carbon_dioxide_\
+emissions"]], "Text",
+ CellChangeTimes->{{3.766872933184326*^9, 3.766872966885185*^9}, {
+  3.766873003891204*^9, 3.766873005797106*^9}, {3.766873115669229*^9, 
+  3.7668731224700384`*^9}},ExpressionUUID->"56544248-2ac9-4882-9f43-\
+42e5f834ceab"],
+
+Cell[TextData[{
+ ButtonBox["Emissions",
+  BaseStyle->"Hyperlink",
+  ButtonData->{
+    URL["https://en.wikipedia.org/wiki/Environmental_impact_of_aviation"], 
+    None},
+  ButtonNote->
+   "https://en.wikipedia.org/wiki/Environmental_impact_of_aviation"],
+ ": less than 463 km: 257g/km, greater than 463 km: 177g/km, International \
+(Finland) 113g/km. The scale factor for altitude is 1917/715. In 2015, Europe \
+implemented a ",
+ ButtonBox["rule",
+  BaseStyle->"Hyperlink",
+  ButtonData->{
+    URL["https://ec.europa.eu/clima/policies/transport/vehicles/cars_en"], 
+    None},
+  ButtonNote->
+   "https://ec.europa.eu/clima/policies/transport/vehicles/cars_en"],
+ " \[OpenCurlyDoubleQuote]all new cars registered shall not emit more than an \
+average of 130 g/km\[CloseCurlyDoubleQuote] (per passenger kilometre)"
+}], "Text",
+ CellChangeTimes->{{3.7668731255567813`*^9, 3.766873127828705*^9}, {
+  3.766873305765772*^9, 3.7668733948854017`*^9}, {3.7668734267571526`*^9, 
+  3.766873481013033*^9}, {3.766874117364811*^9, 3.766874206285185*^9}, {
+  3.78872327222735*^9, 
+  3.7887232811369777`*^9}},ExpressionUUID->"9df4355b-79a4-4925-b9a5-\
+8b06f9c299e8"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"short", "=", 
+    RowBox[{"Select", "[", 
+     RowBox[{"flightwithyear", ",", 
+      RowBox[{
+       RowBox[{"463", "\[GreaterEqual]", " ", 
+        RowBox[{"#", "[", 
+         RowBox[{"[", "2", "]"}], "]"}]}], "&"}]}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Select", " ", "short", " ", "haul", " ", "flights"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"mid", " ", "=", " ", 
+    RowBox[{"Select", "[", 
+     RowBox[{"flightwithyear", ",", 
+      RowBox[{
+       RowBox[{"463", "<", 
+        RowBox[{"#", "[", 
+         RowBox[{"[", "2", "]"}], "]"}], "\[LessEqual]", " ", "950"}], 
+       "&"}]}], "]"}]}], ";"}], " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Select", " ", "medium", " ", "haul", " ", "flights"}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"long", "=", 
+    RowBox[{"Select", "[", 
+     RowBox[{"flightwithyear", ",", 
+      RowBox[{
+       RowBox[{"950", "<", " ", 
+        RowBox[{"#", "[", 
+         RowBox[{"[", "2", "]"}], "]"}]}], "&"}]}], "]"}]}], ";", " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{"Select", " ", "long", " ", "haul", " ", "flights"}], " ", "*)"}],
+    "\[IndentingNewLine]", 
+   RowBox[{"emshort", "=", 
+    RowBox[{"257", 
+     RowBox[{"short", "[", 
+      RowBox[{"[", 
+       RowBox[{"All", ",", "2"}], "]"}], "]"}]}]}], ";", " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{"Short", "-", 
+     RowBox[{"haul", " ", 
+      RowBox[{"emissions", " ", "[", "g", "]"}]}]}], " ", "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"emmid", "=", 
+    RowBox[{"177", " ", 
+     RowBox[{"mid", "[", 
+      RowBox[{"[", 
+       RowBox[{"All", ",", "2"}], "]"}], "]"}]}]}], " ", ";", " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{"Medium", "-", 
+     RowBox[{"haul", " ", 
+      RowBox[{"emissions", " ", "[", "g", "]"}]}]}], " ", "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"emlong", "=", " ", 
+    RowBox[{"113", " ", 
+     RowBox[{"long", "[", 
+      RowBox[{"[", 
+       RowBox[{"All", ",", "2"}], "]"}], "]"}]}]}], ";", " ", 
+   RowBox[{"(*", " ", 
+    RowBox[{"Long", "-", 
+     RowBox[{"haul", " ", 
+      RowBox[{"emissions", " ", "[", "g", "]"}]}]}], " ", "*)"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"emtotal", "=", 
+    RowBox[{"Total", "[", 
+     RowBox[{"Join", "[", 
+      RowBox[{"emshort", ",", "emmid", ",", "emlong"}], "]"}], "]"}]}], ";"}],
+   " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{"Total", " ", "flight", " ", 
+    RowBox[{"emissions", " ", "[", "g", "]"}]}], " ", 
+   "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"percentem", "[", "h_", "]"}], ":=", 
+   RowBox[{"SetPrecision", "[", 
+    RowBox[{
+     FractionBox[
+      RowBox[{"100", " ", 
+       RowBox[{"Total", "[", "h", "]"}]}], "emtotal"], ",", "3"}], "]"}]}], 
+  " ", 
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Function", " ", "to", " ", "compute", " ", "percentage", " ", "of", " ", 
+    "emission", " ", "for", " ", "a", " ", "given", " ", "set", " ", "of", 
+    " ", "flights"}], " ", "*)"}]}], "\[IndentingNewLine]", 
+ RowBox[{"Print", "[", 
+  RowBox[{"\"\<Total flight emissions of \>\"", "<>", 
+   RowBox[{"ToString", "[", 
+    FractionBox[
+     RowBox[{"SetPrecision", "[", 
+      RowBox[{"emtotal", ",", "3"}], "]"}], 
+     SuperscriptBox["10", "6"]], "]"}], "<>", "\"\< Tonnes\>\""}], 
+  "]"}], "\[IndentingNewLine]", 
+ RowBox[{"Print", "[", 
+  RowBox[{
+  "\"\<The percentage emissions from short-, medium- and long-haul flights \
+were \>\"", "<>", 
+   RowBox[{"ToString", "[", 
+    RowBox[{"percentem", "[", "emshort", "]"}], "]"}], "<>", "\"\<, \>\"", "<>", 
+   RowBox[{"ToString", "[", 
+    RowBox[{"percentem", "[", "emmid", "]"}], "]"}], "<>", "\"\<, and \>\"", "<>", 
+   RowBox[{"ToString", "[", 
+    RowBox[{"percentem", "[", "emlong", "]"}], "]"}], "<>", 
+   "\"\< percent respectively\>\""}], "]"}]}], "Input",
+ CellChangeTimes->{{3.7668734232405586`*^9, 3.7668734248851595`*^9}, {
+   3.76758751203935*^9, 3.767587527800001*^9}, {3.7675876012003045`*^9, 
+   3.7675876286323586`*^9}, 3.7675877249940534`*^9, {3.767587802888812*^9, 
+   3.7675880032634974`*^9}, {3.767588222193231*^9, 3.7675882239666586`*^9}, {
+   3.7887232939961357`*^9, 
+   3.788723661363393*^9}},ExpressionUUID->"e899d90b-1c06-4afc-a9f4-\
+11d6a1e270ad"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"Total flight emissions of 62.7 Tonnes\"\>"], "Print",
+ CellChangeTimes->{
+  3.788723321892417*^9, {3.7887234997825494`*^9, 3.7887235032242713`*^9}, {
+   3.7887236441828403`*^9, 
+   3.7887236645535936`*^9}},ExpressionUUID->"1d20a5b1-923a-4fd5-b861-\
+e33b61454a52"],
+
+Cell[BoxData["\<\"The percentage emissions from short-, medium- and long-haul \
+flights were 0.729, 6.13, and 93.1 percent respectively\"\>"], "Print",
+ CellChangeTimes->{
+  3.788723321892417*^9, {3.7887234997825494`*^9, 3.7887235032242713`*^9}, {
+   3.7887236441828403`*^9, 
+   3.7887236645585794`*^9}},ExpressionUUID->"15e7c187-69b6-4c0a-83d4-\
+87248cdf4cd3"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1368, 839},
+WindowMargins->{{-8, Automatic}, {Automatic, -8}},
+FrontEndVersion->"11.1 for Microsoft Windows (64-bit) (April 18, 2017)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 158, 3, 101, "Title", "ExpressionUUID" -> \
+"76adffa2-4f75-4b32-b252-6069734133f4"],
+Cell[741, 27, 524, 10, 68, "Text", "ExpressionUUID" -> \
+"06dbf4df-fc43-4dc8-958d-d7f9edfb7978"],
+Cell[CellGroupData[{
+Cell[1290, 41, 157, 3, 72, "Chapter", "ExpressionUUID" -> \
+"736cc1b3-16c0-465b-9db7-40ee40a94e78"],
+Cell[CellGroupData[{
+Cell[1472, 48, 207, 3, 70, "Section", "ExpressionUUID" -> \
+"83962998-f0e4-45b4-85be-1848ab5e29f8"],
+Cell[1682, 53, 335, 7, 30, "Text", "ExpressionUUID" -> \
+"4e81765f-aa7a-4ab4-8910-4d72781cdd2a"],
+Cell[2020, 62, 5958, 140, 280, "Input", "ExpressionUUID" -> \
+"b2ab64e0-8c0e-4986-8a33-4f4002f8f4cf"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[8027, 208, 162, 3, 72, "Chapter", "ExpressionUUID" -> \
+"cb269b07-8892-42f5-b0de-a423ef612e6e"],
+Cell[CellGroupData[{
+Cell[8214, 215, 169, 3, 70, "Section", "ExpressionUUID" -> \
+"1bfd3839-3bc6-4699-9c52-d4fa9e993e2e"],
+Cell[8386, 220, 597, 11, 49, "Text", "ExpressionUUID" -> \
+"cafb0995-d437-4d36-91fa-6e962ba57ad0"],
+Cell[8986, 233, 272, 6, 30, "Text", "ExpressionUUID" -> \
+"f70bc50a-1944-4ac3-97df-82e7ffef8c25"],
+Cell[9261, 241, 1917, 49, 88, "Input", "ExpressionUUID" -> \
+"7a2a3867-e374-42bc-a0a3-93b58751e8b9"],
+Cell[11181, 292, 427, 8, 49, "Text", "ExpressionUUID" -> \
+"a4309646-39ba-423b-bf26-265a3a31e5e0"],
+Cell[11611, 302, 3107, 76, 202, "Input", "ExpressionUUID" -> \
+"9a77890f-a019-45d3-a957-d8e492f810d6"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[14755, 383, 180, 3, 70, "Section", "ExpressionUUID" -> \
+"65aab529-bc8d-44ef-b643-2cdd91225a54"],
+Cell[14938, 388, 239, 6, 30, "Text", "ExpressionUUID" -> \
+"75b00bb8-36ca-4319-9625-9da72be67056"],
+Cell[15180, 396, 253, 6, 30, "Text", "ExpressionUUID" -> \
+"94a0e022-22ae-45cd-a697-fdf99f6956af"],
+Cell[15436, 404, 1554, 38, 107, "Input", "ExpressionUUID" -> \
+"2a87f3ca-cbd2-42a9-a34e-a67cffd91435"],
+Cell[16993, 444, 242, 6, 30, "Text", "ExpressionUUID" -> \
+"997b91d1-1e4e-4f37-aca7-949cb920d90e"],
+Cell[17238, 452, 2969, 74, 183, "Input", "ExpressionUUID" -> \
+"a44ae8ef-8d59-48aa-a954-623a667e3eb7"],
+Cell[20210, 528, 446, 9, 49, "Text", "ExpressionUUID" -> \
+"3d8a80b5-8f2f-42a0-84bf-30d1c2d9a6b5"],
+Cell[20659, 539, 2531, 66, 126, "Input", "ExpressionUUID" -> \
+"f305f20e-7ccf-4728-a4ef-e72c312c124c"],
+Cell[23193, 607, 591, 10, 30, "Text", "ExpressionUUID" -> \
+"316e4c1c-389f-4e37-9fa1-624b3c419cf8"],
+Cell[23787, 619, 2852, 65, 107, "Input", "ExpressionUUID" -> \
+"0083fdd8-841c-4d47-b0ab-d31f619dd39e"],
+Cell[26642, 686, 232, 5, 30, "Text", "ExpressionUUID" -> \
+"82fe29f7-9058-4604-abe1-38693cbb2365"],
+Cell[26877, 693, 4609, 130, 240, "Input", "ExpressionUUID" -> \
+"ad22c604-21c4-4f77-9139-01a5bc6ce6bc"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[31535, 829, 186, 3, 72, "Chapter", "ExpressionUUID" -> \
+"6d9c8f42-4a16-43ca-a6ab-d72458d1ecee"],
+Cell[CellGroupData[{
+Cell[31746, 836, 170, 3, 70, "Section", "ExpressionUUID" -> \
+"327c0a35-c807-46e8-990c-1fe58420a291"],
+Cell[CellGroupData[{
+Cell[31941, 843, 174, 3, 49, "Subsection", "ExpressionUUID" -> \
+"55f50055-d7fe-401d-9ca6-e1f55bc63bc8"],
+Cell[32118, 848, 285, 6, 30, "Text", "ExpressionUUID" -> \
+"a3bb3446-6c08-4314-8682-f7b06ae64073"],
+Cell[32406, 856, 5630, 127, 325, "Input", "ExpressionUUID" -> \
+"02647260-a51c-454c-8c79-2213ca4155cf"],
+Cell[38039, 985, 424, 16, 30, "Text", "ExpressionUUID" -> \
+"727f84e8-2a7b-4537-be35-0e32370e449b"],
+Cell[38466, 1003, 1187, 32, 69, "Input", "ExpressionUUID" -> \
+"48d70051-9f1a-4726-aca6-7ff411b07424"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[39690, 1040, 161, 3, 49, "Subsection", "ExpressionUUID" -> \
+"062d1b71-60d8-4dcd-a3b1-947227dd70c7"],
+Cell[39854, 1045, 203, 3, 30, "Text", "ExpressionUUID" -> \
+"fd6d7318-5482-4ad2-a403-87ec1ce7bb0c"],
+Cell[40060, 1050, 800, 13, 30, "Input", "ExpressionUUID" -> \
+"37fd6f80-48d7-4270-ab2c-893f109cbf3b"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[40897, 1068, 161, 3, 49, "Subsection", "ExpressionUUID" -> \
+"de3d1e2b-717e-4f60-92f9-a2b7ba0d8092"],
+Cell[41061, 1073, 255, 4, 30, "Text", "ExpressionUUID" -> \
+"09186c9a-4082-4aa9-8352-555d5915fd4f"],
+Cell[41319, 1079, 563, 13, 30, "Input", "ExpressionUUID" -> \
+"1465c76d-e03f-481e-b662-d241c24f5a67"],
+Cell[41885, 1094, 195, 3, 41, "Text", "ExpressionUUID" -> \
+"6b129c56-ee75-4dab-a612-8a9138191a4e"],
+Cell[42083, 1099, 181, 3, 30, "Text", "ExpressionUUID" -> \
+"d22867db-f4e0-4e92-b387-52fbb73fe3db"],
+Cell[42267, 1104, 1354, 33, 69, "Input", "ExpressionUUID" -> \
+"df728b04-5c3b-4c5c-8e3d-f42b240aa04c"],
+Cell[43624, 1139, 193, 3, 41, "Text", "ExpressionUUID" -> \
+"f5121060-e1e4-45eb-bbe8-ea9d279050bd"],
+Cell[43820, 1144, 197, 3, 30, "Text", "ExpressionUUID" -> \
+"4278ea77-854b-4063-8685-3d5c2f4cc892"],
+Cell[44020, 1149, 1305, 32, 69, "Input", "ExpressionUUID" -> \
+"c07c93a2-236a-4f1f-b396-833f44bc2af7"],
+Cell[CellGroupData[{
+Cell[45350, 1185, 195, 4, 30, "Input", "ExpressionUUID" -> \
+"2dfb583f-d4e4-4480-ba03-aaaa7075c39b"],
+Cell[45548, 1191, 247, 4, 30, "Output", "ExpressionUUID" -> \
+"4dd3c783-bac6-4a79-bd4d-6358584dc9bb"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[45844, 1201, 167, 3, 49, "Subsection", "ExpressionUUID" -> \
+"6989a8af-e2e8-4792-bd2a-bdea6d07f7c6"],
+Cell[46014, 1206, 231, 4, 30, "Text", "ExpressionUUID" -> \
+"5e9f8ef2-cd0d-49e7-9ff4-9cf63eddf36b"],
+Cell[46248, 1212, 1701, 43, 88, "Input", "ExpressionUUID" -> \
+"8331244e-1e65-445c-90bd-6c61bd27dded"],
+Cell[47952, 1257, 314, 10, 30, "Text", "ExpressionUUID" -> \
+"1c4c7eca-18a9-476f-8200-b0187993ceab"],
+Cell[48269, 1269, 2051, 53, 173, "Input", "ExpressionUUID" -> \
+"ccca0367-9b26-4965-997d-7f001863cd42"],
+Cell[50323, 1324, 161, 3, 30, "Text", "ExpressionUUID" -> \
+"68de32b5-e685-4c6e-9f18-812c56ef42f7"],
+Cell[50487, 1329, 468, 12, 50, "Input", "ExpressionUUID" -> \
+"82bb6ec8-f443-4504-ad5a-0415d907cd93"],
+Cell[50958, 1343, 1094, 24, 88, "Input", "ExpressionUUID" -> \
+"643d4707-75b2-4409-8ea6-e996ed23c10a"],
+Cell[52055, 1369, 280, 6, 30, "Text", "ExpressionUUID" -> \
+"acc281c6-b564-40d6-bc65-1d244743d7f3"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[52384, 1381, 163, 3, 70, "Section", "ExpressionUUID" -> \
+"c01c6a4b-042c-424c-a03a-3eb040187a46"],
+Cell[52550, 1386, 222, 5, 30, "Text", "ExpressionUUID" -> \
+"cee289e3-3c01-4435-a0cd-406c6842d421"],
+Cell[52775, 1393, 2576, 64, 164, "Input", "ExpressionUUID" -> \
+"4ae86301-70a7-4dad-948e-f484c951b5c2"],
+Cell[CellGroupData[{
+Cell[55376, 1461, 170, 3, 49, "Subsection", "ExpressionUUID" -> \
+"bd24e438-f377-4efb-b9c1-5bcadf30d54f"],
+Cell[55549, 1466, 185, 3, 30, "Text", "ExpressionUUID" -> \
+"8b3198a2-2fcf-4881-9fcd-a12e0fa7b6c3"],
+Cell[55737, 1471, 4810, 125, 202, "Input", "ExpressionUUID" -> \
+"e6f91e04-6c5f-4d11-bb6e-c902fe93dbae"],
+Cell[60550, 1598, 253, 6, 30, "Text", "ExpressionUUID" -> \
+"79fb46d2-fc61-4fe6-8269-e4f3a235d2d7"],
+Cell[CellGroupData[{
+Cell[60828, 1608, 5577, 146, 240, "Input", "ExpressionUUID" -> \
+"2e59f179-71c6-4fc9-9370-75154123847b"],
+Cell[66408, 1756, 548, 14, 28, "Print", "ExpressionUUID" -> \
+"cacff240-a84d-48e2-8592-672245ed4675"]
+}, Open  ]],
+Cell[66971, 1773, 176, 3, 30, "Text", "ExpressionUUID" -> \
+"2c92e8e1-f754-4f40-83d2-8126e268d442"],
+Cell[67150, 1778, 802, 21, 69, "Input", "ExpressionUUID" -> \
+"9b16a406-9c3d-4eed-822d-20c439eb3a09"],
+Cell[67955, 1801, 169, 3, 30, "Text", "ExpressionUUID" -> \
+"69806edf-cbbe-47d9-a4af-460523cee017"],
+Cell[CellGroupData[{
+Cell[68149, 1808, 1960, 43, 141, "Input", "ExpressionUUID" -> \
+"ae98cfe5-5192-4d43-ae9a-5b81a5be880c"],
+Cell[70112, 1853, 334, 5, 22, "Print", "ExpressionUUID" -> \
+"e5e85801-a568-4ca2-a841-06f68849c0cd"]
+}, Open  ]],
+Cell[70461, 1861, 534, 11, 30, "Text", "ExpressionUUID" -> \
+"56544248-2ac9-4882-9f43-42e5f834ceab"],
+Cell[70998, 1874, 1149, 26, 49, "Text", "ExpressionUUID" -> \
+"9df4355b-79a4-4925-b9a5-8b06f9c299e8"],
+Cell[CellGroupData[{
+Cell[72172, 1904, 4281, 116, 278, "Input", "ExpressionUUID" -> \
+"e899d90b-1c06-4afc-a9f4-11d6a1e270ad"],
+Cell[CellGroupData[{
+Cell[76478, 2024, 281, 5, 22, "Print", "ExpressionUUID" -> \
+"1d20a5b1-923a-4fd5-b861-e33b61454a52"],
+Cell[76762, 2031, 361, 6, 22, "Print", "ExpressionUUID" -> \
+"15e7c187-69b6-4c0a-83d4-87248cdf4cd3"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
